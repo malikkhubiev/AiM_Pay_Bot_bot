@@ -312,69 +312,69 @@ async def bind_card(message: types.Message, telegram_id: str, u_name: str = None
         await message.answer(response["message"])
         return
 
-# async def send_referral_link(message: types.Message, telegram_id: str, u_name: str = None):
-#     log.info(f"send_referral_link")
-#     init_user_cache(telegram_id)
-#     keyboard = InlineKeyboardMarkup(row_width=1)
-#     keyboard.add(
-#         InlineKeyboardButton("Назад", callback_data='earn_new_clients')
-#     )
+async def send_referral_link(message: types.Message, telegram_id: str, u_name: str = None):
+    log.info(f"send_referral_link")
+    init_user_cache(telegram_id)
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(
+        InlineKeyboardButton("Назад", callback_data='earn_new_clients')
+    )
 
-#     if links_cache[telegram_id]['referral_link'] is not None:
-#         log.info(f"из кэша")
-#         await bot.send_video(
-#             chat_id=message.chat.id,
-#             video=REFERRAL_VIDEO_URL,
-#             caption=(
-#                 f"Отправляю тебе реферальную ссылку:\n{links_cache[telegram_id]['referral_link']}\n"
-#                 f"Зарабатывай, продвигая It - образование."
-#             ),
-#             reply_markup=keyboard
-#         )
-#         return 
+    if links_cache[telegram_id]['referral_link'] is not None:
+        log.info(f"из кэша")
+        await bot.send_video(
+            chat_id=message.chat.id,
+            video=REFERRAL_VIDEO_URL,
+            caption=(
+                f"Отправляю тебе реферальную ссылку:\n{links_cache[telegram_id]['referral_link']}\n"
+                f"Зарабатывай, продвигая It - образование."
+            ),
+            reply_markup=keyboard
+        )
+        return 
     
-#     referral_url = SERVER_URL + "/get_referral_link"
-#     user_data = {"telegram_id": telegram_id}
+    referral_url = SERVER_URL + "/get_referral_link"
+    user_data = {"telegram_id": telegram_id}
 
-#     log.info(f"telegram_id {telegram_id}")
-#     log.info(f"referral_url {referral_url}")
-#     log.info(f"user_data {user_data}")
+    log.info(f"telegram_id {telegram_id}")
+    log.info(f"referral_url {referral_url}")
+    log.info(f"user_data {user_data}")
 
-#     response = await send_request(
-#         referral_url,
-#         method="POST",
-#         json=user_data
-#     ) 
+    response = await send_request(
+        referral_url,
+        method="POST",
+        json=user_data
+    ) 
 
-#     text = ""
+    text = ""
 
-#     if response["status"] == "success":
-#         referral_link = response.get("referral_link")
-#         links_cache[telegram_id]['referral_link'] = referral_link
+    if response["status"] == "success":
+        referral_link = response.get("referral_link")
+        links_cache[telegram_id]['referral_link'] = referral_link
         
-#         log.info(f"referral_link {referral_link}")
+        log.info(f"referral_link {referral_link}")
 
-#         await bot.send_video(
-#             chat_id=message.chat.id,
-#             video=REFERRAL_VIDEO_URL,
-#             caption=(
-#                 f"Отправляю тебе реферальную ссылку:\n{referral_link}\n"
-#                 f"Зарабатывай, продвигая It - образование."
-#             ),
-#             reply_markup=keyboard
-#         )
+        await bot.send_video(
+            chat_id=message.chat.id,
+            video=REFERRAL_VIDEO_URL,
+            caption=(
+                f"Отправляю тебе реферальную ссылку:\n{referral_link}\n"
+                f"Зарабатывай, продвигая It - образование."
+            ),
+            reply_markup=keyboard
+        )
 
-#         return
+        return
 
-#     elif response["status"] == "error":
-#         text = response["message"]
-#     else:
-#         text = "Ошибка при генерации ссылки"
-#     await bot.send_message(
-#         chat_id=message.chat.id,
-#         text=text,
-#         reply_markup=keyboard
-#     )
+    elif response["status"] == "error":
+        text = response["message"]
+    else:
+        text = "Ошибка при генерации ссылки"
+    await bot.send_message(
+        chat_id=message.chat.id,
+        text=text,
+        reply_markup=keyboard
+    )
 
 # async def send_invite_link(message: types.Message, telegram_id: str, u_name: str = None):
 #     log.info(f"send_invite_link")
