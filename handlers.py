@@ -122,7 +122,7 @@ async def getting_started(message: types.Message, telegram_id: str, u_name: str 
     elif response["status"] == "error":
         await message.answer(response["message"])
 
-async def get_payout_balance(message: types.Message, telegram_id: str):
+async def get_payout_balance(message: types.Message, telegram_id: str, u_name: str = None):
     log.info(f"Получена команда /get_payout_balance от {telegram_id}")
     log.info(f"Real {MAIN_TELEGRAM_ID}")
     log.info(f"telegram = main {MAIN_TELEGRAM_ID == telegram_id}")
@@ -487,6 +487,9 @@ async def send_referral_link(message: types.Message, telegram_id: str, u_name: s
 
 async def earn_new_clients(message: types.Message, telegram_id: str, u_name: str = None):
     keyboard = InlineKeyboardMarkup(row_width=1)
+    log.info(f"telegram_id {telegram_id}")
+    log.info(f"{MAIN_TELEGRAM_ID}")
+    log.info(f"telegram_id = MAIN_TELEGRAM_ID{telegram_id == MAIN_TELEGRAM_ID}")
     
     if telegram_id == MAIN_TELEGRAM_ID:
         keyboard.add(
