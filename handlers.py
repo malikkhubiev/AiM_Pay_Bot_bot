@@ -124,6 +124,8 @@ async def getting_started(message: types.Message, telegram_id: str, u_name: str 
 
 async def get_payout_balance(message: types.Message, telegram_id: str):
     log.info(f"Получена команда /get_payout_balance от {telegram_id}")
+    log.info(f"Real {MAIN_TELEGRAM_ID}")
+    log.info(f"telegram = main {MAIN_TELEGRAM_ID == telegram_id}")
 
     get_payout_balance = SERVER_URL + "/payout_balance"
     user_data = {
