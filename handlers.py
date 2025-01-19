@@ -165,6 +165,7 @@ async def get_payout_balance(message: types.Message, telegram_id: str, u_name: s
                 parse_mode=ParseMode.HTML,
                 reply_markup=keyboard
             )
+            log.info(f"response data {data}")
             if users:
                 log.info(f"users {users}")
                 for user in users:
