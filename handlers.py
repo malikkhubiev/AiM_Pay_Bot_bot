@@ -124,8 +124,6 @@ async def getting_started(message: types.Message, telegram_id: str, u_name: str 
 
 async def get_payout_balance(message: types.Message, telegram_id: str, u_name: str = None):
     log.info(f"Получена команда /get_payout_balance от {telegram_id}")
-    log.info(f"Real {MAIN_TELEGRAM_ID}")
-    log.info(f"telegram = main {MAIN_TELEGRAM_ID == telegram_id}")
 
     get_payout_balance = SERVER_URL + "/payout_balance"
     user_data = {
@@ -133,7 +131,7 @@ async def get_payout_balance(message: types.Message, telegram_id: str, u_name: s
     }
     log.info(f"user_data {user_data}")
 
-    if telegram_id == MAIN_TELEGRAM_ID:
+    if str(telegram_id) == str(MAIN_TELEGRAM_ID):
         response = await send_request(
             get_payout_balance,
             method="POST",
@@ -491,7 +489,7 @@ async def earn_new_clients(message: types.Message, telegram_id: str, u_name: str
     log.info(f"{MAIN_TELEGRAM_ID}")
     log.info(f"telegram_id = MAIN_TELEGRAM_ID{telegram_id == MAIN_TELEGRAM_ID}")
     
-    if telegram_id == MAIN_TELEGRAM_ID:
+    if str(telegram_id) == str(MAIN_TELEGRAM_ID):
         keyboard.add(
             InlineKeyboardButton("Информация о выплатах 💳", callback_data='get_payout_balance'),
         )
