@@ -485,6 +485,12 @@ async def send_referral_link(message: types.Message, telegram_id: str, u_name: s
 
 async def earn_new_clients(message: types.Message, telegram_id: str, u_name: str = None):
     keyboard = InlineKeyboardMarkup(row_width=1)
+    
+    if telegram_id == MAIN_TELEGRAM_ID:
+        keyboard.add(
+            InlineKeyboardButton("Информация о выплатах 💳", callback_data='get_payout_balance'),
+        )
+
     keyboard.add(
         InlineKeyboardButton("Получить реферальную ссылку", callback_data='get_referral'),
         InlineKeyboardButton("Привязать/изменить карту", callback_data='bind_card'),
