@@ -5,6 +5,7 @@ from utils import *
 callback_handlers = {
     "start": start,
     "getting_started": getting_started,
+    "get_payout_balance": get_payout_balance,
     "documents": get_documents,
     "public_offer": get_public_offer,
     "privacy_policy": get_privacy_policy,

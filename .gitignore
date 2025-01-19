@@ -1,2 +1,3 @@
 .env
 cashe.py
+__pycache__

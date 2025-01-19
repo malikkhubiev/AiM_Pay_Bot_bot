@@ -7,7 +7,8 @@ from config import (
     REPORT_VIDEO_URL,
     REFERRAL_VIDEO_URL,
     EARN_NEW_CLIENTS_VIDEO_URL,
-    TAX_INFO_IMG_URL
+    TAX_INFO_IMG_URL,
+    MAIN_TELEGRAM_ID
 )
 from analytics import send_event_to_ga4
 from utils import *
@@ -118,6 +119,50 @@ async def getting_started(message: types.Message, telegram_id: str, u_name: str 
             caption="Добро пожаловать! Здесь Вы можете оплатить курс и заработать на привлечении новых клиентов.",
             reply_markup=keyboard
         )
+    elif response["status"] == "error":
+        await message.answer(response["message"])
+
+async def get_payout_balance(message: types.Message, telegram_id: str):
+    log.info(f"Получена команда /get_payout_balance от {telegram_id}")
+
+    get_payout_balance = SERVER_URL + "/payout_balance"
+    user_data = {
+        "telegram_id": telegram_id
+    }
+    log.info(f"user_data {user_data}")
+
+    if telegram_id == MAIN_TELEGRAM_ID:
+        response = await send_request(
+            get_payout_balance,
+            method="POST",
+            json=user_data
+        )
+        log.info(f"response {response}")
+
+        if response["status"] == "success":
+            data = response["data"]
+            total_balance = data["total_balance"]
+            total_extra = data["total_extra"]
+            num_of_users = data["num_of_users"]
+            num_of_users_plus_30 = data["num_of_users_plus_30"]
+            result = data["result"]
+            keyboard = InlineKeyboardMarkup(row_width=1)
+            keyboard.add(
+                InlineKeyboardButton("Назад", callback_data='start'),
+            )
+            report = (
+                f"<b>Отчёт:</b>\n\n"
+                f"Общий баланс: {total_balance}\n",
+                f"Общий процент: {total_extra}\n",
+                f"Число пользователей: {num_of_users}\n",
+                f"Общая сумма +30 рублей за каждого пользователя: {num_of_users_plus_30}\n",
+                f"Итого: {result}"
+            )
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text=report,
+                reply_markup=keyboard
+            )
     elif response["status"] == "error":
         await message.answer(response["message"])
 

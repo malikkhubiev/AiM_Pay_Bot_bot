@@ -8,6 +8,7 @@ USE_RENDER = os.getenv("USE_RENDER")
 API_TOKEN = os.getenv("API_TOKEN")
 SERVER_URL = os.getenv("SERVER_URL")
 
+MAIN_TELEGRAM_ID = os.getenv("MAIN_TELEGRAM_ID")
 GROUP_ID = os.getenv("GROUP_ID")
 
 COURSE_AMOUNT = os.getenv("COURSE_AMOUNT")
