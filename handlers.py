@@ -146,6 +146,7 @@ async def get_payout_balance(message: types.Message, telegram_id: str, u_name: s
             num_of_users = data["num_of_users"]
             num_of_users_plus_30 = data["num_of_users_plus_30"]
             result = data["result"]
+            users = data["users"]
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(
                 InlineKeyboardButton("Назад", callback_data='start'),
@@ -164,6 +165,20 @@ async def get_payout_balance(message: types.Message, telegram_id: str, u_name: s
                 parse_mode=ParseMode.HTML,
                 reply_markup=keyboard
             )
+            if users:
+                log.info(f"users {users}")
+                for user in users:
+                    log.info(f"users перебор начался")
+                    user_info = (
+                        f"<b>Пользователь:</b> {user['username']}\n"
+                        f"<b>Telegram ID:</b> {user['telegram_id']}\n\n"
+                    )
+                    log.info(f"user_info {user_info}")
+                    await bot.send_message(
+                        chat_id=message.chat.id,
+                        text=user_info,
+                        parse_mode=ParseMode.HTML
+                    )
     elif response["status"] == "error":
         await message.answer(response["message"])
 
