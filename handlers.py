@@ -161,6 +161,7 @@ async def get_payout_balance(message: types.Message, telegram_id: str, u_name: s
             await bot.send_message(
                 chat_id=message.chat.id,
                 text=report,
+                parse_mode=ParseMode.HTML,
                 reply_markup=keyboard
             )
     elif response["status"] == "error":
