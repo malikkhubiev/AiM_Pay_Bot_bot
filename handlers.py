@@ -152,10 +152,10 @@ async def get_payout_balance(message: types.Message, telegram_id: str, u_name: s
             )
             report = (
                 f"<b>Отчёт:</b>\n\n"
-                f"Общий баланс: {total_balance}\n",
-                f"Общий процент: {total_extra}\n",
-                f"Число пользователей: {num_of_users}\n",
-                f"Общая сумма +30 рублей за каждого пользователя: {num_of_users_plus_30}\n",
+                f"Общий баланс: {total_balance}\n"
+                f"Общий процент: {total_extra}\n"
+                f"Число пользователей: {num_of_users}\n"
+                f"Общая сумма +30 рублей за каждого пользователя: {num_of_users_plus_30}\n"
                 f"Итого: {result}"
             )
             await bot.send_message(
