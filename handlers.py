@@ -171,8 +171,9 @@ async def get_payout_balance(message: types.Message, telegram_id: str, u_name: s
                 for user in users:
                     log.info(f"users перебор начался")
                     user_info = (
+                        f"<b>Telegram ID:</b> {user['id']}\n"
                         f"<b>Пользователь:</b> {user['username']}\n"
-                        f"<b>Telegram ID:</b> {user['id']}\n\n"
+                        f"<b>Баланс:</b> {user['balance']}\n\n"
                     )
                     log.info(f"user_info {user_info}")
                     await bot.send_message(
