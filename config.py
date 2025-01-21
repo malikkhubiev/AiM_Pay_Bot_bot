@@ -28,3 +28,4 @@ REFERRAL_VIDEO_URL = os.getenv("REFERRAL_VIDEO_URL")
 PORT = os.getenv("PORT")
 
 SECRET_CODE = os.getenv("SECRET_CODE")
+PROMO_CODE = os.getenv("PROMO_CODE")

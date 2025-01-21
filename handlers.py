@@ -8,7 +8,8 @@ from config import (
     REFERRAL_VIDEO_URL,
     EARN_NEW_CLIENTS_VIDEO_URL,
     TAX_INFO_IMG_URL,
-    MAIN_TELEGRAM_ID
+    MAIN_TELEGRAM_ID,
+    PROMO_CODE
 )
 from analytics import send_event_to_ga4
 from utils import *
@@ -75,6 +76,11 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
                 keyboard.add(
                     InlineKeyboardButton("Оплатить курс", callback_data='pay_course'),
                 )
+
+            if response["with_promo"] == True:
+                keyboard.add(
+                    InlineKeyboardButton("Ввести промокод", callback_data='type_promo'),
+                )
             # else:
             #     keyboard.add(
             #         InlineKeyboardButton("Получить ссылку", callback_data='get_invite_link'),
@@ -109,6 +115,12 @@ async def getting_started(message: types.Message, telegram_id: str, u_name: str 
 
     if response["status"] == "success":
         keyboard = InlineKeyboardMarkup(row_width=1)
+
+        if response["with_promo"] == True:
+            keyboard.add(
+                InlineKeyboardButton("Ввести промокод", callback_data='type_promo'),
+            )
+
         keyboard.add(
             InlineKeyboardButton("Оплатить курс", callback_data='pay_course'),
             InlineKeyboardButton("Заработать на новых клиентах", callback_data='earn_new_clients')
@@ -531,6 +543,32 @@ async def earn_new_clients(message: types.Message, telegram_id: str, u_name: str
         f"Отправляйте рекламные сообщения в тематические чаты по изучению программирования, а также в телеграм-группы различных российских вузов и вы можете выйти на прибыль в {float(REFERRAL_AMOUNT)*50} рублей после привлечения 50 клиентов.\n\nПеред тем как начать, ещё раз внимательно прочитайте документы, чтобы не было никаких неприятностей.",
         reply_markup=keyboard
     )
+
+async def type_promo(message: types.Message, telegram_id: str, u_name: str = None):
+    await bot.send_message(
+        chat_id=message.chat.id,
+        text="Введите промокод без пробелов:"
+    )
+
+async def handle_promo_input(message: types.Message):
+    promo_code = message.text.strip()
+    log.info("Введённый промокод")
+    if str(promo_code) == str(PROMO_CODE):
+        log.info("Верный промокод")
+        register_user_with_promo_url = SERVER_URL + "/register_user_with_promo"
+        telegram_id = message.from_user.id
+        user_data = {"telegram_id": telegram_id}
+        response = await send_request(
+            register_user_with_promo_url,
+            method="POST",
+            json=user_data
+        )
+        if response["status"] == "error":
+            text = response["message"]
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text=text
+            )
 
 async def generate_report(message: types.Message, telegram_id: str, u_name: str = None):
     keyboard = InlineKeyboardMarkup(row_width=1)
