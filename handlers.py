@@ -134,64 +134,6 @@ async def getting_started(message: types.Message, telegram_id: str, u_name: str 
     elif response["status"] == "error":
         await message.answer(response["message"])
 
-async def get_payout_balance(message: types.Message, telegram_id: str, u_name: str = None):
-    log.info(f"Получена команда /get_payout_balance от {telegram_id}")
-
-    get_payout_balance_url = SERVER_URL + "/payout_balance"
-
-    if str(telegram_id) == str(MAIN_TELEGRAM_ID):
-        response = await send_request(
-            get_payout_balance_url,
-            method="POST",
-            json={}
-        )
-        log.info(f"response {response}")
-
-        if response["status"] == "success":
-            data = response["data"]
-            total_balance = data["total_balance"]
-            total_extra = data["total_extra"]
-            num_of_users = data["num_of_users"]
-            num_of_users_plus_30 = data["num_of_users_plus_30"]
-            result = data["result"]
-            users = data["users"]
-            keyboard = InlineKeyboardMarkup(row_width=1)
-            keyboard.add(
-                InlineKeyboardButton("Назад", callback_data='start'),
-            )
-            report = (
-                f"<b>Отчёт:</b>\n\n"
-                f"Общий баланс: {total_balance}\n"
-                f"Общий процент: {total_extra}\n"
-                f"Число пользователей: {num_of_users}\n"
-                f"Общая сумма +30 рублей за каждого пользователя: {num_of_users_plus_30}\n"
-                f"Итого: {result}"
-            )
-            await bot.send_message(
-                chat_id=message.chat.id,
-                text=report,
-                parse_mode=ParseMode.HTML,
-                reply_markup=keyboard
-            )
-            log.info(f"response data {data}")
-            if users:
-                log.info(f"users {users}")
-                for user in users:
-                    log.info(f"users перебор начался")
-                    user_info = (
-                        f"<b>Telegram ID:</b> {user['id']}\n"
-                        f"<b>Пользователь:</b> {user['username']}\n"
-                        f"<b>Баланс:</b> {user['balance']}\n\n"
-                    )
-                    log.info(f"user_info {user_info}")
-                    await bot.send_message(
-                        chat_id=message.chat.id,
-                        text=user_info,
-                        parse_mode=ParseMode.HTML
-                    )
-    elif response["status"] == "error":
-        await message.answer(response["message"])
-
 async def get_documents(message: types.Message, telegram_id: str, u_name: str = None):
     log.info(f"Получена команда /get_documents от {telegram_id}")
     keyboard = InlineKeyboardMarkup(row_width=1)
@@ -545,6 +487,7 @@ async def admin(message: types.Message, telegram_id: str, u_name: str = None):
     keyboard.add(
         InlineKeyboardButton("Информация о выплатах 💳", callback_data='get_payout_balance'),
         InlineKeyboardButton("Промокодеры по датам 🐝", callback_data='get_promo_users_frequency'),
+        InlineKeyboardButton("Оплаты по датам 🍰", callback_data='get_payments_frequency'),
         InlineKeyboardButton("Назад", callback_data='earn_new_clients'),
     )
     log.info(f"telegram_id {telegram_id}")
@@ -556,6 +499,64 @@ async def admin(message: types.Message, telegram_id: str, u_name: str = None):
         f"Добро пожаловать, мистер администратор!",
         reply_markup=keyboard
     )
+
+async def get_payout_balance(message: types.Message, telegram_id: str, u_name: str = None):
+    log.info(f"Получена команда /get_payout_balance от {telegram_id}")
+
+    get_payout_balance_url = SERVER_URL + "/payout_balance"
+
+    if str(telegram_id) == str(MAIN_TELEGRAM_ID):
+        response = await send_request(
+            get_payout_balance_url,
+            method="POST",
+            json={}
+        )
+        log.info(f"response {response}")
+
+        if response["status"] == "success":
+            data = response["data"]
+            total_balance = data["total_balance"]
+            total_extra = data["total_extra"]
+            num_of_users = data["num_of_users"]
+            num_of_users_plus_30 = data["num_of_users_plus_30"]
+            result = data["result"]
+            users = data["users"]
+            keyboard = InlineKeyboardMarkup(row_width=1)
+            keyboard.add(
+                InlineKeyboardButton("Назад", callback_data='start'),
+            )
+            report = (
+                f"<b>Отчёт:</b>\n\n"
+                f"Общий баланс: {total_balance}\n"
+                f"Общий процент: {total_extra}\n"
+                f"Число пользователей: {num_of_users}\n"
+                f"Общая сумма +30 рублей за каждого пользователя: {num_of_users_plus_30}\n"
+                f"Итого: {result}"
+            )
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text=report,
+                parse_mode=ParseMode.HTML,
+                reply_markup=keyboard
+            )
+            log.info(f"response data {data}")
+            if users:
+                log.info(f"users {users}")
+                for user in users:
+                    log.info(f"users перебор начался")
+                    user_info = (
+                        f"<b>Telegram ID:</b> {user['id']}\n"
+                        f"<b>Пользователь:</b> {user['name']}\n"
+                        f"<b>Баланс:</b> {user['balance']}\n\n"
+                    )
+                    log.info(f"user_info {user_info}")
+                    await bot.send_message(
+                        chat_id=message.chat.id,
+                        text=user_info,
+                        parse_mode=ParseMode.HTML
+                    )
+    elif response["status"] == "error":
+        await message.answer(response["message"])
 
 async def get_promo_users_frequency(message: types.Message, telegram_id: str, u_name: str = None):
     log.info(f"Получена команда /get_promo_users_frequency от {telegram_id}")
@@ -574,7 +575,7 @@ async def get_promo_users_frequency(message: types.Message, telegram_id: str, u_
             promo_users = response["promo_users_count"]
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(
-                InlineKeyboardButton("Назад", callback_data='start'),
+                InlineKeyboardButton("Назад", callback_data='admin'),
             )
             log.info(f"response data {response}")
             if promo_users:
@@ -589,6 +590,11 @@ async def get_promo_users_frequency(message: types.Message, telegram_id: str, u_
                         text=user_info,
                         parse_mode=ParseMode.HTML
                     )
+            await bot.send_message(
+                message.chat.id,
+                f"Что-нибудь ещё?",
+                reply_markup=keyboard
+            )
     elif response["status"] == "error":
         await message.answer(response["message"])
 
@@ -609,7 +615,7 @@ async def get_payments_frequency(message: types.Message, telegram_id: str, u_nam
             payments_frequency = response["payments_frequency"]
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(
-                InlineKeyboardButton("Назад", callback_data='start'),
+                InlineKeyboardButton("Назад", callback_data='admin'),
             )
             log.info(f"response data {response}")
             if payments_frequency:
@@ -624,6 +630,11 @@ async def get_payments_frequency(message: types.Message, telegram_id: str, u_nam
                         text=payments_info,
                         parse_mode=ParseMode.HTML
                     )
+            await bot.send_message(
+                message.chat.id,
+                f"Что-нибудь ещё?",
+                reply_markup=keyboard
+            )
     elif response["status"] == "error":
         await message.answer(response["message"])
 
