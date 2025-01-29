@@ -567,7 +567,7 @@ async def get_promo_users_frequency(message: types.Message, telegram_id: str, u_
         response = await send_request(
             get_promo_users_frequency_url,
             method="POST",
-            json={}
+            json={"message": "hey"}
         )
         log.info(f"response {response}")
 
@@ -607,7 +607,7 @@ async def get_payments_frequency(message: types.Message, telegram_id: str, u_nam
         response = await send_request(
             get_payments_frequency_url,
             method="POST",
-            json={}
+            json={"message": "hey"}
         )
         log.info(f"response {response}")
 
