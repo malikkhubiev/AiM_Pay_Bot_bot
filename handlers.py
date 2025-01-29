@@ -137,17 +137,13 @@ async def getting_started(message: types.Message, telegram_id: str, u_name: str 
 async def get_payout_balance(message: types.Message, telegram_id: str, u_name: str = None):
     log.info(f"Получена команда /get_payout_balance от {telegram_id}")
 
-    get_payout_balance = SERVER_URL + "/payout_balance"
-    user_data = {
-        "telegram_id": telegram_id
-    }
-    log.info(f"user_data {user_data}")
+    get_payout_balance_url = SERVER_URL + "/payout_balance"
 
     if str(telegram_id) == str(MAIN_TELEGRAM_ID):
         response = await send_request(
-            get_payout_balance,
+            get_payout_balance_url,
             method="POST",
-            json=user_data
+            json={}
         )
         log.info(f"response {response}")
 
@@ -521,7 +517,7 @@ async def earn_new_clients(message: types.Message, telegram_id: str, u_name: str
     
     if str(telegram_id) == str(MAIN_TELEGRAM_ID):
         keyboard.add(
-            InlineKeyboardButton("Информация о выплатах 💳", callback_data='get_payout_balance'),
+            InlineKeyboardButton("Админ", callback_data='admin'),
         )
 
     keyboard.add(
@@ -543,6 +539,93 @@ async def earn_new_clients(message: types.Message, telegram_id: str, u_name: str
         f"Отправляйте рекламные сообщения в тематические чаты по изучению программирования, а также в телеграм-группы различных российских вузов и вы можете выйти на прибыль в {float(REFERRAL_AMOUNT)*50} рублей после привлечения 50 клиентов.\n\nПеред тем как начать, ещё раз внимательно прочитайте документы, чтобы не было никаких неприятностей.",
         reply_markup=keyboard
     )
+
+async def admin(message: types.Message, telegram_id: str, u_name: str = None):
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(
+        InlineKeyboardButton("Информация о выплатах 💳", callback_data='get_payout_balance'),
+        InlineKeyboardButton("Промокодеры по датам 🐝", callback_data='get_promo_users_frequency'),
+        InlineKeyboardButton("Назад", callback_data='earn_new_clients'),
+    )
+    log.info(f"telegram_id {telegram_id}")
+    log.info(f"{MAIN_TELEGRAM_ID}")
+    log.info(f"telegram_id = MAIN_TELEGRAM_ID{telegram_id == MAIN_TELEGRAM_ID}")
+
+    await bot.send_message(
+        message.chat.id,
+        f"Добро пожаловать, мистер администратор!",
+        reply_markup=keyboard
+    )
+
+async def get_promo_users_frequency(message: types.Message, telegram_id: str, u_name: str = None):
+    log.info(f"Получена команда /get_promo_users_frequency от {telegram_id}")
+
+    get_promo_users_frequency_url = SERVER_URL + "/get_promo_users_frequency"
+
+    if str(telegram_id) == str(MAIN_TELEGRAM_ID):
+        response = await send_request(
+            get_promo_users_frequency_url,
+            method="POST",
+            json={}
+        )
+        log.info(f"response {response}")
+
+        if response["status"] == "success":
+            promo_users = response["promo_users_count"]
+            keyboard = InlineKeyboardMarkup(row_width=1)
+            keyboard.add(
+                InlineKeyboardButton("Назад", callback_data='start'),
+            )
+            log.info(f"response data {response}")
+            if promo_users:
+                log.info(f"users {promo_users}")
+                for user in promo_users:
+                    log.info(f"promo_users перебор начался")
+                    
+                    user_info = f"{user['date']}\t{user['promo_users_count']}"
+                    log.info(f"user_info {user_info}")
+                    await bot.send_message(
+                        chat_id=message.chat.id,
+                        text=user_info,
+                        parse_mode=ParseMode.HTML
+                    )
+    elif response["status"] == "error":
+        await message.answer(response["message"])
+
+async def get_payments_frequency(message: types.Message, telegram_id: str, u_name: str = None):
+    log.info(f"Получена команда /get_payments_frequency от {telegram_id}")
+
+    get_payments_frequency_url = SERVER_URL + "/get_payments_frequency"
+
+    if str(telegram_id) == str(MAIN_TELEGRAM_ID):
+        response = await send_request(
+            get_payments_frequency_url,
+            method="POST",
+            json={}
+        )
+        log.info(f"response {response}")
+
+        if response["status"] == "success":
+            payments_frequency = response["payments_frequency"]
+            keyboard = InlineKeyboardMarkup(row_width=1)
+            keyboard.add(
+                InlineKeyboardButton("Назад", callback_data='start'),
+            )
+            log.info(f"response data {response}")
+            if payments_frequency:
+                log.info(f"payments_frequency {payments_frequency}")
+                for payment in payments_frequency:
+                    log.info(f"promo_users перебор начался")
+                    
+                    payments_info = f"{payment['date']}\t{payment['payments_count']}"
+                    log.info(f"payments_info {payments_info}")
+                    await bot.send_message(
+                        chat_id=message.chat.id,
+                        text=payments_info,
+                        parse_mode=ParseMode.HTML
+                    )
+    elif response["status"] == "error":
+        await message.answer(response["message"])
 
 async def type_promo(message: types.Message, telegram_id: str, u_name: str = None):
     await bot.send_message(
