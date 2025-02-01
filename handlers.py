@@ -612,7 +612,8 @@ async def get_payments_frequency(message: types.Message, telegram_id: str, u_nam
         log.info(f"response {response}")
 
         if response["status"] == "success":
-            payments_frequency = response["payments_frequency"]
+            data = response["data"]
+            payments_frequency = data["payments_frequency"]
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(
                 InlineKeyboardButton("Назад", callback_data='admin'),
