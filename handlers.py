@@ -536,8 +536,7 @@ async def get_payout_balance(message: types.Message, telegram_id: str, u_name: s
             await bot.send_message(
                 chat_id=message.chat.id,
                 text=report,
-                parse_mode=ParseMode.HTML,
-                reply_markup=keyboard
+                parse_mode=ParseMode.HTML
             )
             log.info(f"response data {data}")
             if users:
@@ -555,6 +554,11 @@ async def get_payout_balance(message: types.Message, telegram_id: str, u_name: s
                         text=user_info,
                         parse_mode=ParseMode.HTML
                     )
+            await bot.send_message(
+                message.chat.id,
+                f"Что-нибудь ещё?",
+                reply_markup=keyboard
+            )
     elif response["status"] == "error":
         await message.answer(response["message"])
 
