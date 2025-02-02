@@ -573,7 +573,7 @@ async def get_promo_users_frequency(message: types.Message, telegram_id: str, u_
 
         if response["status"] == "success":
             data = response["data"]
-            promo_users = data["promo_users_count"]
+            promo_users = data["promo_users_frequency"]
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(
                 InlineKeyboardButton("Назад", callback_data='admin'),
