@@ -547,7 +547,7 @@ async def get_payout_balance(message: types.Message, telegram_id: str, u_name: s
                     user_info = (
                         f"<b>Telegram ID:</b> {user['id']}\n"
                         f"<b>Пользователь:</b> {user['name']}\n"
-                        f"<b>Баланс:</b> {user['balance']}\n\n"
+                        f"<b>Количество привлечённых рефералов:</b> {user['paid_referrals']}\n\n"
                     )
                     log.info(f"user_info {user_info}")
                     await bot.send_message(
@@ -581,6 +581,10 @@ async def get_promo_users_frequency(message: types.Message, telegram_id: str, u_
             log.info(f"response data {response}")
             if promo_users:
                 log.info(f"users {promo_users}")
+                await bot.send_message(
+                    chat_id=message.chat.id,
+                    text="Список промокодеров по датам:"
+                )
                 for user in promo_users:
                     log.info(f"promo_users перебор начался")
                     
@@ -622,6 +626,10 @@ async def get_payments_frequency(message: types.Message, telegram_id: str, u_nam
             log.info(f"response data {response}")
             if payments_frequency:
                 log.info(f"payments_frequency {payments_frequency}")
+                await bot.send_message(
+                    chat_id=message.chat.id,
+                    text="Список оплат по датам:"
+                )
                 for payment in payments_frequency:
                     log.info(f"promo_users перебор начался")
                     
