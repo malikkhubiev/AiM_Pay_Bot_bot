@@ -463,8 +463,8 @@ async def earn_new_clients(message: types.Message, telegram_id: str, u_name: str
         )
 
     keyboard.add(
-        InlineKeyboardButton("Получить реферальную ссылку", callback_data='get_referral'),
         InlineKeyboardButton("Привязать/изменить карту", callback_data='bind_card'),
+        InlineKeyboardButton("Получить реферальную ссылку", callback_data='get_referral'),
         InlineKeyboardButton("Сформировать отчёт о заработке", callback_data='generate_report'),
         InlineKeyboardButton("Налоги", callback_data='tax_info'),
         InlineKeyboardButton("Документы", callback_data='documents'),
