@@ -62,7 +62,7 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
         if response["type"] == "temp_user":
             log.info(f"temp")
             keyboard.add(
-                InlineKeyboardButton("Начало работы 🐱‍🏍", callback_data='getting_started'),
+                InlineKeyboardButton("Начало работы 🏔️", callback_data='getting_started'),
                 InlineKeyboardButton("Документы 📚", callback_data='documents'),
             )
             log.info(f"send_message")
