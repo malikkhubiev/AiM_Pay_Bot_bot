@@ -157,7 +157,7 @@ async def more_about_course(message: types.Message, telegram_id: str, u_name: st
         InlineKeyboardButton("Назад", callback_data='start'),
     )
 
-    message = """
+    message1 = """
     💎 <b>Мгновенное погружение в машинное обучение и построение нейросетей</b> 💎
     Ты начинаешь разбираться <b>в мире аналитики данных</b>? Этот курс создан для <b>новичков</b>, которые хотят быстро освоить Python и библиотеки работы с данными, <b>машинным обучением и построением нейросетей</b>.
 
@@ -181,7 +181,7 @@ async def more_about_course(message: types.Message, telegram_id: str, u_name: st
 
     await bot.send_message(
         chat_id=message.chat.id,
-        text=message,
+        text=message1,
         reply_markup=keyboard
     )
 
