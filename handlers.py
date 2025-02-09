@@ -183,7 +183,8 @@ async def more_about_course(message: types.Message, telegram_id: str, u_name: st
     await bot.send_message(
         chat_id=message.chat.id,
         text=message1,
-        reply_markup=keyboard
+        parse_mode=ParseMode.HTML,
+        reply_markup=keyboard,
     )
 
 async def course_structure(message: types.Message, telegram_id: str, u_name: str = None):
@@ -230,6 +231,7 @@ async def course_structure(message: types.Message, telegram_id: str, u_name: str
     await bot.send_message(
         chat_id=message.chat.id,
         text=message2,
+        parse_mode=ParseMode.HTML,
         reply_markup=keyboard
     )
 
