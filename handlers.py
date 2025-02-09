@@ -86,6 +86,7 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
             #         InlineKeyboardButton("Получить ссылку", callback_data='get_invite_link'),
             #     )
             keyboard.add(
+                InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'),
                 InlineKeyboardButton("Заработать на новых клиентах 💸", callback_data='earn_new_clients')
             )
             await bot.send_video(
