@@ -92,7 +92,7 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
             await bot.send_video(
                 chat_id=message.chat.id,
                 video=START_VIDEO_URL,
-                caption="💎Мы очень рады тебя видеть!💎\n\nМы построили бота, чтобы ты ОПЛАТИЛ КУРС, получил ЗНАНИЯ и ЗАРАБОТАЛ, советуя друзьям КАЧЕСТВЕННЫЙ ПРОДУКТ.",
+                caption="💎Мы очень рады тебя видеть!💎\n\nОПЛАТИ КУРС, получи ЗНАНИЯ и ЗАРАБОТАЙ, советуя друзьям КАЧЕСТВЕННЫЙ ПРОДУКТ.",
                 reply_markup=keyboard
             )
     elif response["status"] == "error":
@@ -664,12 +664,18 @@ async def get_promo_users_frequency(message: types.Message, telegram_id: str, u_
 
         if response["status"] == "success":
             data = response["data"]
+            number_of_promo = data["number_of_promo"]
+            promo_num_left = data["promo_num_left"]
             promo_users = data["promo_users_frequency"]
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(
                 InlineKeyboardButton("Назад", callback_data='admin'),
             )
             log.info(f"response data {response}")
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text=f"Количество свободных промокодов: {promo_num_left}\nКоличество пользователей по промокоду: {number_of_promo}"
+            )
             if promo_users:
                 log.info(f"users {promo_users}")
                 await bot.send_message(
