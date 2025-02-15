@@ -92,7 +92,7 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
             await bot.send_video(
                 chat_id=message.chat.id,
                 video=START_VIDEO_URL,
-                caption="Добро пожаловать! Здесь Вы можете оплатить курс и заработать на привлечении новых клиентов.",
+                caption="💎Мы очень рады тебя видеть!💎\nМы построили бота, чтобы ты ОПЛАТИЛ КУРС, получил ЗНАНИЯ и ЗАРАБОТАЛ, советуя друзьям КАЧЕСТВЕННЫЙ ПРОДУКТ.",
                 reply_markup=keyboard
             )
     elif response["status"] == "error":
@@ -125,12 +125,12 @@ async def getting_started(message: types.Message, telegram_id: str, u_name: str 
         keyboard.add(
             InlineKeyboardButton("Оплатить курс 💰", callback_data='pay_course'),
             InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'),
-            InlineKeyboardButton("Заработать на новых клиентах 💸", callback_data='earn_new_clients')
+            InlineKeyboardButton("Заработать, советуя друзьям 💸", callback_data='earn_new_clients')
         )
         await bot.send_video(
             chat_id=message.chat.id,
             video=START_VIDEO_URL,
-            caption="Добро пожаловать! Здесь Вы можете оплатить курс и заработать на привлечении новых клиентов.",
+            caption="💎Мы очень рады тебя видеть!💎\nМы построили бота, чтобы ты ОПЛАТИЛ КУРС, получил ЗНАНИЯ и ЗАРАБОТАЛ, советуя друзьям КАЧЕСТВЕННЫЙ ПРОДУКТ.",
             reply_markup=keyboard
         )
     elif response["status"] == "error":
@@ -140,8 +140,8 @@ async def get_documents(message: types.Message, telegram_id: str, u_name: str = 
     log.info(f"Получена команда /get_documents от {telegram_id}")
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(
-        InlineKeyboardButton("Публичная оферта 📜", callback_data='public_offer'),
-        InlineKeyboardButton("Политика Конфиденциальности 📝", callback_data='privacy_policy'),
+        InlineKeyboardButton("Публичная оферта 📙", callback_data='public_offer'),
+        InlineKeyboardButton("Политика Конфиденциальности 📗", callback_data='privacy_policy'),
         InlineKeyboardButton("Назад", callback_data='start'),
     )
     await bot.send_message(
@@ -546,13 +546,13 @@ async def earn_new_clients(message: types.Message, telegram_id: str, u_name: str
     
     if str(telegram_id) == str(MAIN_TELEGRAM_ID):
         keyboard.add(
-            InlineKeyboardButton("Админ 👨‍💻", callback_data='admin'),
+            InlineKeyboardButton("Админ 👑", callback_data='admin'),
         )
 
     keyboard.add(
-        InlineKeyboardButton("Привязать/изменить карту 💳", callback_data='bind_card'),
-        InlineKeyboardButton("Получить реферальную ссылку 🏎", callback_data='get_referral'),
-        InlineKeyboardButton("Сформировать отчёт о заработке 🚀", callback_data='generate_report'),
+        InlineKeyboardButton("Привязать/изменить карту 💎", callback_data='bind_card'),
+        InlineKeyboardButton("Получить реферальную ссылку 🚀", callback_data='get_referral'),
+        InlineKeyboardButton("Сформировать отчёт о заработке 🏰", callback_data='generate_report'),
         InlineKeyboardButton("Налоги 🏫", callback_data='tax_info'),
         InlineKeyboardButton("Документы 📚", callback_data='documents'),
         InlineKeyboardButton("Назад", callback_data='start'),
@@ -561,11 +561,11 @@ async def earn_new_clients(message: types.Message, telegram_id: str, u_name: str
     await bot.send_video(
         chat_id=message.chat.id,
         video=EARN_NEW_CLIENTS_VIDEO_URL,
-        caption=f"Курс стоит {COURSE_AMOUNT} рублей.\nЗа каждого привлечённого вами клиента вы заработаете {REFERRAL_AMOUNT} рублей.\nПосле 3-х клиентов курс становится для Вас бесплатным.\nНачиная с 4-го клиента, вы начинаете зарабатывать на продвижении It-образования."
+        caption=f"💸Курс стоит {COURSE_AMOUNT} рублей.💸\nЗа каждого друга, который купил курс, вы заработаете {REFERRAL_AMOUNT} рублей.\nПриведёте 3-х таких друзей и отобьёте стоимость курса.\nНачиная с 4-го друга, вы начинаете зарабатывать."
     )
     await bot.send_message(
         message.chat.id,
-        f"Отправляйте рекламные сообщения в тематические чаты по изучению программирования, а также в телеграм-группы различных российских вузов и вы можете выйти на прибыль в {float(REFERRAL_AMOUNT)*50} рублей после привлечения 50 клиентов.\n\nПеред тем как начать, ещё раз внимательно прочитайте документы, чтобы не было никаких неприятностей.",
+        f"Ваши друзья могут сидеть в чатах по изучению программирования 👩‍💻, в телеграм-группах российских вузов 🏤 и Вы можете выйти на ПРИБЫЛЬ в {float(REFERRAL_AMOUNT)*50} рублей после привлечения 50 друзей. Дружить - это полезно 🍯 \n\nПеред тем как начать, ещё раз внимательно прочитайте документы на всякий случай. 📚",
         reply_markup=keyboard
     )
 
