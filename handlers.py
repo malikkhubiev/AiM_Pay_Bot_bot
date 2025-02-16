@@ -265,7 +265,7 @@ async def handle_pay_command(message: types.Message, telegram_id: str, u_name: s
     amount = float(COURSE_AMOUNT)  # Пример суммы, можно заменить
     
     log.info(f"amount {amount}")
-
+    await message.answer(f"Проверка регистрации...")
     # Шаг 1: Проверка, зарегистрирован ли пользователь
     check_user_url = SERVER_URL + "/check_user"
 
@@ -282,6 +282,7 @@ async def handle_pay_command(message: types.Message, telegram_id: str, u_name: s
 
     if response["status"] == "success":
         log.info(f"response {response}")
+        await message.answer(f"Проверка пройдена! Построение ссылки для оплаты...")
         user_id = response["user"]["id"]
         
         log.info(f"user_id {user_id}")
