@@ -13,15 +13,22 @@ def web_server():
         return web.json_response(response_data)
     
     async def notify_user(request):
+        log.info(f"notify_user handler started")
         data = await request.json()
+        log.info(f"data {data}")
         tg_id = data.get("telegram_id")
+        log.info(f"tg_id {tg_id}")
         message_text = data.get("message")
+        log.info(f"message_text {message_text}")
 
         if tg_id and message_text:
+            log.info(f"check tg_id and message_text passed")
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(
                 InlineKeyboardButton("Реферальная программа", callback_data='earn_new_clients'),
             )
+
+            log.info(f"before sending message")
             await bot.send_message(
                 chat_id=tg_id,
                 text=message_text,
