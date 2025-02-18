@@ -374,7 +374,10 @@ async def generate_clients_report(message: types.Message, telegram_id: str, u_na
                 log.info(f"invited_list invited перебор начался")
                 user_info = (
                     f"<b>Пользователь:</b> {invited['username']}\n"
-                    f"<b>Telegram ID:</b> {invited['telegram_id']}\n\n"
+                    f"<b>Telegram ID:</b> {invited['telegram_id']}\n"
+                    f"<b>Дата и время первого входа в бота:</b> {invited['payment_date']}\n"
+                    f"<b>Дата и время оплаты курса:</b> {invited['start_working_date']}\n"
+                    f"<b>Время от первого входа до оплаты:</b> {invited['time_for_pay']}\n"
                 )
                 log.info(f"user_info {user_info}")
                 await bot.send_message(
