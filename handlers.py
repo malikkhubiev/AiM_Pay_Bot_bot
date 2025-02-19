@@ -423,41 +423,45 @@ async def report_list_as_is(message: types.Message, telegram_id: str, u_name: st
         await message.answer(response["message"])
 
 async def report_list_as_file(message: types.Message, telegram_id: str, u_name: str = None):
-    log.info(f"report_list_as_file")
+    log.info(f"report_list_as_file вызван для {telegram_id}")
     url = SERVER_URL + "/generate_clients_report_list_as_file"
+    user_data = {"telegram_id": telegram_id}
 
-    log.info(f"telegram_id {telegram_id}")
-    log.info(f"url {url}")
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(InlineKeyboardButton("Назад", callback_data="earn_new_clients"))
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, json={"telegram_id": telegram_id}) as response:
-            if response.status == 200:
-                file_path = f"report_{telegram_id}.xlsx"
-                
-                with open(file_path, "wb") as f:
-                    f.write(await response.read())
+    response = await send_request(
+        url, 
+        method="POST", 
+        json=user_data
+    )
 
-                keyboard = InlineKeyboardMarkup(row_width=1)
-                keyboard.add(
-                    InlineKeyboardButton("Назад", callback_data='earn_new_clients')
-                )
-                
-                await bot.send_document(
-                    message.chat.id,
-                    InputFile(file_path),
-                    reply_markup=keyboard
-                )
-                
-                await bot.send_message(
-                    message.chat.id,
-                    "Что-нибудь ещё?",
-                    reply_markup=keyboard
-                )
+    if isinstance(response, dict) and response.get("status") == "error":
+        await message.answer(response.get("message", "Ошибка при генерации отчёта"))
+        return
 
-                os.remove(file_path)  # Удаляем после отправки
-            else:
-                await message.answer("Ошибка при генерации отчёта")
+    file_path = f"report_{telegram_id}.xlsx"
 
+    try:
+        with open(file_path, "wb") as f:
+            f.write(response.content)  # Сохранение файла
+
+        await bot.send_document(
+            message.chat.id,
+            InputFile(file_path),
+            reply_markup=keyboard
+        )
+
+        await bot.send_message(message.chat.id, "Что-нибудь ещё?", reply_markup=keyboard)
+
+    except Exception as e:
+        log.error(f"Ошибка при отправке файла: {e}")
+        await message.answer("Ошибка при генерации отчёта")
+
+    finally:
+        if os.path.exists(file_path):
+            os.remove(file_path)  # Удаляем файл после отправки
+            log.info(f"Файл {file_path} успешно удалён")
 async def bind_card(message: types.Message, telegram_id: str, u_name: str = None):
     bind_card_url = SERVER_URL + "/bind_card"
     user_data = {"telegram_id": telegram_id}
