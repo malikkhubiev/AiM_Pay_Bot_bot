@@ -21,6 +21,8 @@ callback_handlers = {
     "get_referral": send_referral_link,
     "bind_card": bind_card,
     "generate_report": generate_clients_report,
+    "report_list_as_is": report_list_as_is,
+    "report_list_as_file": report_list_as_file,
     "tax_info": get_tax_info,
 }
 

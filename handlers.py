@@ -331,6 +331,8 @@ async def generate_clients_report(message: types.Message, telegram_id: str, u_na
 
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(
+        InlineKeyboardButton("Напечатать список в боте", callback_data='report_list_as_is'),
+        InlineKeyboardButton("Напечатать список в Excel-таблице", callback_data='report_list_as_file'),
         InlineKeyboardButton("Назад", callback_data='earn_new_clients')
     )
 
@@ -366,6 +368,32 @@ async def generate_clients_report(message: types.Message, telegram_id: str, u_na
             parse_mode=ParseMode.HTML,
             reply_markup=keyboard
         )
+    elif response["status"] == "error":
+        await message.answer(response["message"])
+
+async def report_list_as_is(message: types.Message, telegram_id: str, u_name: str = None):
+    log.info(f"report_list_as_is")
+    generate_clients_report_list_as_is_url = SERVER_URL + "/generate_clients_report_list_as_is"
+    user_data = {"telegram_id": telegram_id}
+
+    log.info(f"telegram_id {telegram_id}")
+    log.info(f"generate_clients_report_list_as_is_url {generate_clients_report_list_as_is_url}")
+    log.info(f"user_data {user_data}")
+
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(
+        InlineKeyboardButton("Назад", callback_data='earn_new_clients')
+    )
+
+    response = await send_request(
+        generate_clients_report_list_as_is_url,
+        method="POST",
+        json=user_data
+    )
+
+    if response["status"] == "success":
+        report = response["report"]
+        invited_list = report.get("invited_list")
 
         # Send the list of invited users
         if invited_list:
@@ -385,8 +413,60 @@ async def generate_clients_report(message: types.Message, telegram_id: str, u_na
                     text=user_info,
                     parse_mode=ParseMode.HTML
                 )
+        await bot.send_message(
+            message.chat.id,
+            f"Что-нибудь ещё?",
+            reply_markup=keyboard
+        )
     elif response["status"] == "error":
         await message.answer(response["message"])
+
+async def report_list_as_file(message: types.Message, telegram_id: str, u_name: str = None):
+    log.info(f"report_list_as_file")
+    generate_clients_report_list_as_file_url = SERVER_URL + "/generate_clients_report_list_as_file"
+    user_data = {"telegram_id": telegram_id}
+
+    log.info(f"telegram_id {telegram_id}")
+    log.info(f"generate_clients_report_list_as_file_url {generate_clients_report_list_as_file_url}")
+    log.info(f"user_data {user_data}")
+
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(
+        InlineKeyboardButton("Назад", callback_data='earn_new_clients')
+    )
+
+    response = await send_request(
+        generate_clients_report_list_as_file_url,
+        method="POST",
+        json=user_data
+    )
+
+    if response.status_code == 200:
+        file_path = "clients_report.xlsx"
+        
+        # Сохраняем файл
+        with open(file_path, "wb") as f:
+            f.write(response.content)
+
+        # Отправляем файл пользователю
+        await bot.send_document(
+            chat_id=message.chat.id,
+            document=InputFile(file_path),
+            reply_markup=keyboard
+        )
+        await bot.send_message(
+            message.chat.id,
+            f"Что-нибудь ещё?",
+            reply_markup=keyboard
+        )
+    elif response["status"] == "error":
+        await message.answer(response["message"])
+    else:
+        await bot.send_message(
+            message.chat.id,
+            f"Что-то пошло не так",
+            reply_markup=keyboard
+        )
 
 async def bind_card(message: types.Message, telegram_id: str, u_name: str = None):
     bind_card_url = SERVER_URL + "/bind_card"
