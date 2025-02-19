@@ -392,8 +392,7 @@ async def report_list_as_is(message: types.Message, telegram_id: str, u_name: st
     )
 
     if response["status"] == "success":
-        report = response["report"]
-        invited_list = report.get("invited_list")
+        invited_list = response.get("invited_list")
 
         # Send the list of invited users
         if invited_list:
