@@ -1,4 +1,5 @@
 from utils import log
+import os
 from config import (
     COURSE_AMOUNT,
     REFERRAL_AMOUNT,
@@ -11,6 +12,7 @@ from config import (
     MAIN_TELEGRAM_ID,
     PROMO_CODE
 )
+import aiohttp
 from analytics import send_event_to_ga4
 from utils import *
 from loader import *
@@ -402,8 +404,8 @@ async def report_list_as_is(message: types.Message, telegram_id: str, u_name: st
                 user_info = (
                     f"<b>Пользователь:</b> {invited['username']}\n"
                     f"<b>Telegram ID:</b> {invited['telegram_id']}\n"
-                    f"<b>Дата и время первого входа в бота:</b> {invited['payment_date']}\n"
-                    f"<b>Дата и время оплаты курса:</b> {invited['start_working_date']}\n"
+                    f"<b>Дата и время первого входа в бота:</b> {invited['start_working_date']}\n"
+                    f"<b>Дата и время оплаты курса:</b> {invited['payment_date']}\n"
                     f"<b>Время от первого входа до оплаты:</b> {invited['time_for_pay']}\n"
                 )
                 log.info(f"user_info {user_info}")
@@ -422,50 +424,39 @@ async def report_list_as_is(message: types.Message, telegram_id: str, u_name: st
 
 async def report_list_as_file(message: types.Message, telegram_id: str, u_name: str = None):
     log.info(f"report_list_as_file")
-    generate_clients_report_list_as_file_url = SERVER_URL + "/generate_clients_report_list_as_file"
-    user_data = {"telegram_id": telegram_id}
+    url = SERVER_URL + "/generate_clients_report_list_as_file"
 
     log.info(f"telegram_id {telegram_id}")
-    log.info(f"generate_clients_report_list_as_file_url {generate_clients_report_list_as_file_url}")
-    log.info(f"user_data {user_data}")
+    log.info(f"url {url}")
 
-    keyboard = InlineKeyboardMarkup(row_width=1)
-    keyboard.add(
-        InlineKeyboardButton("Назад", callback_data='earn_new_clients')
-    )
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json={"telegram_id": telegram_id}) as response:
+            if response.status == 200:
+                file_path = f"report_{telegram_id}.xlsx"
+                
+                with open(file_path, "wb") as f:
+                    f.write(await response.read())
 
-    response = await send_request(
-        generate_clients_report_list_as_file_url,
-        method="POST",
-        json=user_data
-    )
+                keyboard = InlineKeyboardMarkup(row_width=1)
+                keyboard.add(
+                    InlineKeyboardButton("Назад", callback_data='earn_new_clients')
+                )
+                
+                await bot.send_document(
+                    message.chat.id,
+                    InputFile(file_path),
+                    reply_markup=keyboard
+                )
+                
+                await bot.send_message(
+                    message.chat.id,
+                    "Что-нибудь ещё?",
+                    reply_markup=keyboard
+                )
 
-    if response.status_code == 200:
-        file_path = "clients_report.xlsx"
-        
-        # Сохраняем файл
-        with open(file_path, "wb") as f:
-            f.write(response.content)
-
-        # Отправляем файл пользователю
-        await bot.send_document(
-            chat_id=message.chat.id,
-            document=InputFile(file_path),
-            reply_markup=keyboard
-        )
-        await bot.send_message(
-            message.chat.id,
-            f"Что-нибудь ещё?",
-            reply_markup=keyboard
-        )
-    elif response["status"] == "error":
-        await message.answer(response["message"])
-    else:
-        await bot.send_message(
-            message.chat.id,
-            f"Что-то пошло не так",
-            reply_markup=keyboard
-        )
+                os.remove(file_path)  # Удаляем после отправки
+            else:
+                await message.answer("Ошибка при генерации отчёта")
 
 async def bind_card(message: types.Message, telegram_id: str, u_name: str = None):
     bind_card_url = SERVER_URL + "/bind_card"
