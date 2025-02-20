@@ -23,6 +23,7 @@ callback_handlers = {
     "generate_report": generate_clients_report,
     "report_list_as_is": report_list_as_is,
     "report_list_as_file": report_list_as_file,
+    "request_referral_chart": request_referral_chart,
     "tax_info": get_tax_info,
 }
 
