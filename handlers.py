@@ -455,6 +455,35 @@ async def report_list_as_file(message: types.Message, telegram_id: str, u_name: 
         log.error(f"Ошибка при отправке файла: {e}")
         await message.answer("Ошибка при отправке отчёта", reply_markup=keyboard)
 
+async def request_referral_chart(message: types.Message):
+    url = f"{SERVER_URL}/generate_referral_chart_link"
+    payload = {"telegram_id": str(message.from_user.id)}
+
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(
+        InlineKeyboardButton("Назад", callback_data='earn_new_clients')
+    )
+
+    response = await send_request(
+        url,
+        method="POST",
+        json=payload
+    )
+    if response["status"] == "success":
+        data = response.get("data")
+        chart_url = data.get("chart_url")
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=f"Ваш график доступен по ссылке:\n\n{chart_url}",
+            reply_markup=keyboard
+        )
+    elif response["status"] == "error":
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=response["message"],
+            reply_markup=keyboard
+        )
+
 async def bind_card(message: types.Message, telegram_id: str, u_name: str = None):
     bind_card_url = SERVER_URL + "/bind_card"
     user_data = {"telegram_id": telegram_id}
