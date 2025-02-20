@@ -1,5 +1,6 @@
 from utils import log
 import os
+import io
 from config import (
     COURSE_AMOUNT,
     REFERRAL_AMOUNT,
@@ -430,53 +431,23 @@ async def report_list_as_file(message: types.Message, telegram_id: str, u_name: 
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(InlineKeyboardButton("Назад", callback_data="earn_new_clients"))
 
-    response = await send_request(
-        url, 
-        method="POST", 
-        json=user_data
-    )
+    response = await send_request(url, method="POST", json=user_data)
 
-    # 1️⃣ Логируем заголовки ответа
-    log.info(f"Response headers: {response.headers}")
-
-    # 2️⃣ Проверяем, не пришла ли ошибка вместо файла
+    # 1️⃣ Проверяем, что сервер не вернул ошибку
     if isinstance(response, dict):
         log.error(f"Ошибка при генерации отчёта: {response}")
         await message.answer(response.get("message", "Ошибка при генерации отчёта"), reply_markup=keyboard)
         return
 
-    # 3️⃣ Логируем первые 100 байтов ответа
-    log.info(f"First 100 bytes of response: {response.content[:100]}")
-
-    # 4️⃣ Проверяем Content-Type
-    content_type = response.headers.get("Content-Type", "")
-    if not content_type.startswith("application/vnd.openxmlformats"):
-        log.error(f"Неверный Content-Type: {content_type}")
-        await message.answer("Ошибка: сервер вернул некорректные данные", reply_markup=keyboard)
-        return
-
-    file_path = f"report_{telegram_id}.xlsx"
-
+    # 2️⃣ Используем BytesIO для работы с файлом в памяти
     try:
-        # 5️⃣ Логируем перед записью файла
-        log.info(f"Запись отчета в файл {file_path}")
+        file_stream = io.BytesIO(response)  # response — это бинарные данные (файл)
+        file_stream.name = "clients_report.xlsx"  # Telegram требует имя файла
 
-        # 6️⃣ Записываем бинарные данные в файл
-        with open(file_path, "wb") as f:
-            f.write(response.content)
-
-        # 7️⃣ Проверяем, действительно ли файл создан
-        if not os.path.exists(file_path):
-            log.error(f"Файл не найден после создания: {file_path}")
-            await message.answer("Ошибка: файл отчёта не найден после создания.", reply_markup=keyboard)
-            return
-
-        log.info(f"Файл успешно создан: {file_path}")
-
-        # 8️⃣ Отправляем документ в Telegram
+        # 3️⃣ Отправляем файл пользователю
         await bot.send_document(
             message.chat.id,
-            InputFile(file_path),
+            InputFile(file_stream),
             reply_markup=keyboard
         )
 
@@ -485,13 +456,6 @@ async def report_list_as_file(message: types.Message, telegram_id: str, u_name: 
     except Exception as e:
         log.error(f"Ошибка при отправке файла: {e}")
         await message.answer("Ошибка при отправке отчёта", reply_markup=keyboard)
-
-    finally:
-        # 9️⃣ Удаляем файл после отправки
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            log.info(f"Файл {file_path} успешно удалён")
-
 
 async def bind_card(message: types.Message, telegram_id: str, u_name: str = None):
     bind_card_url = SERVER_URL + "/bind_card"
