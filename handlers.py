@@ -451,8 +451,6 @@ async def report_list_as_file(message: types.Message, telegram_id: str, u_name: 
             reply_markup=keyboard
         )
 
-        await bot.send_message(message.chat.id, "Что-нибудь ещё?", reply_markup=keyboard)
-
     except Exception as e:
         log.error(f"Ошибка при отправке файла: {e}")
         await message.answer("Ошибка при отправке отчёта", reply_markup=keyboard)
