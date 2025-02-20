@@ -31,19 +31,26 @@ async def send_request(url, method="GET", headers=None, **kwargs):
                 raise ValueError(f"Unsupported HTTP method: {method}")
 
             # Проверяем статус ответа
-            response.raise_for_status()  # Это автоматически вызывает исключение для ошибок статуса
-            return response.json()  # Возвращаем JSON-ответ
+            response.raise_for_status()  # Вызывает исключение для ошибок статуса
+
+            # Проверяем Content-Type
+            content_type = response.headers.get("Content-Type", "")
+
+            if content_type.startswith("application/json"):
+                return response.json()  # Возвращаем JSON-ответ
+            elif content_type.startswith("application/vnd.openxmlformats"):
+                return response.content  # Возвращаем бинарные данные (файл)
+            else:
+                logger.error(f"Неизвестный Content-Type: {content_type}")
+                return {"status": "error", "message": "Сервер вернул данные неизвестного формата."}
 
         except httpx.RequestError as e:
-            # Логирование ошибок запроса
             logger.error(f"Ошибка при выполнении запроса: {e}")
             return {"status": "error", "message": "Ошибка при подключении к серверу."}
         except httpx.HTTPStatusError as e:
-            # Логирование ошибок HTTP-статуса
             logger.error(f"HTTP статус-код {e.response.status_code}: {e}")
             return {"status": "error", "message": f"Сервер вернул ошибку: {e.response.status_code}."}
         except Exception as e:
-            # Логирование других ошибок
             logger.error(f"Неизвестная ошибка: {e}")
             return {"status": "error", "message": "Произошла ошибка."}
 
