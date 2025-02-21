@@ -336,6 +336,7 @@ async def generate_clients_report(message: types.Message, telegram_id: str, u_na
     keyboard.add(
         InlineKeyboardButton("Напечатать список в боте", callback_data='report_list_as_is'),
         InlineKeyboardButton("Напечатать список в Excel-таблице", callback_data='report_list_as_file'),
+        InlineKeyboardButton("Построить график оплат рефералов", callback_data='request_referral_chart'),
         InlineKeyboardButton("Назад", callback_data='earn_new_clients')
     )
 
