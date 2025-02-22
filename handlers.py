@@ -457,6 +457,7 @@ async def report_list_as_file(message: types.Message, telegram_id: str, u_name: 
         await message.answer("Ошибка при отправке отчёта", reply_markup=keyboard)
 
 async def request_referral_chart(message: types.Message):
+    log.info(f"inside request_referral_chart")
     url = f"{SERVER_URL}/generate_referral_chart_link"
     payload = {"telegram_id": str(message.from_user.id)}
     log.info(f"payload {payload}")
@@ -473,7 +474,7 @@ async def request_referral_chart(message: types.Message):
     )
 
     log.info(f"response {response}")
-    
+
     if response["status"] == "success":
         data = response.get("data")
         chart_url = data.get("chart_url")
