@@ -17,12 +17,18 @@ async def start_test(message: types.Message, telegram_id: str, u_name: str = Non
     await send_question(message.chat.id, telegram_id, 0)
 
 async def send_question(chat_id, telegram_id, question_id):
+    log.info(f"send_question вызвана")
     if question_id >= len(test_questions):
+        log.info(f"Вопросы закончились. Финиш")
         await finish_test(chat_id, telegram_id)
         return
     
+    log.info(f"Игра продолжается")
     question_data = test_questions[question_id]
+    log.info(f"question_data = {question_data}")
+    log.info(question_data)
     text = f"{question_id + 1}/{len(test_questions)}: {question_data['question']}"
+    log.info(f"text = {text}")
     keyboard = get_question_keyboard(question_id)
     await bot.send_message(chat_id, text, reply_markup=keyboard)
 
@@ -31,16 +37,24 @@ async def handle_test_answer(callback_query: types.CallbackQuery):
     question_id, answer_id = int(question_id), int(answer_id)
     
     telegram_id = callback_query.from_user.id
+
+    log.info(f"telegramId = {telegram_id}, question_id={question_id}, answer_id={answer_id}")
+
     user_answers[telegram_id].append(answer_id)
+    log.info("user_answers = {user_answers}")
+    log.info(user_answers)
     
     await callback_query.bot.answer_callback_query(callback_query.id)
     await send_question(callback_query.message.chat.id, telegram_id, question_id + 1)
 
 async def finish_test(chat_id, telegram_id):
+    log.info(f"finish_test called")
     correct_count = sum(
         1 for i, ans in enumerate(user_answers[telegram_id])
         if ans == test_questions[i]["correct"]
     )
+    log.info(f"correct_count = {correct_count}")
     
     text = f"Тест завершён!\nВаш результат: {correct_count}/{len(test_questions)}"
+    log.info(f"text = {text}")
     await bot.send_message(chat_id, text)
