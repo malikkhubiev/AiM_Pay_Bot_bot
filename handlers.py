@@ -127,6 +127,7 @@ async def getting_started(message: types.Message, telegram_id: str, u_name: str 
 
         keyboard.add(
             InlineKeyboardButton("Оплатить курс 💰", callback_data='pay_course'),
+            InlineKeyboardButton("Сдать экзамен и получить сертфикат 🎓", callback_data='start_test'),
             InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'),
             InlineKeyboardButton("Заработать, советуя друзьям 💸", callback_data='earn_new_clients')
         )
