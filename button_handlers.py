@@ -1,7 +1,6 @@
 from handlers import *
 from test_handlers import *
 from utils import *
-from functools import partial
 
 # Список хэндлеров
 callback_handlers = {
@@ -42,8 +41,11 @@ async def universal_callback_handler(callback_query: types.CallbackQuery):
 # Регистрация универсального обработчика и хэндлера ввода текста
 def register_callback_handlers(dp: Dispatcher):
     dp.callback_query_handler(lambda c: c.data.startswith("test_"))(handle_test_answer)  # Обработка ответов теста
+    
     dp.callback_query_handler()(universal_callback_handler)
+    # Передаем telegram_id в обработчики через обертку
+    dp.register_message_handler(lambda message: handle_promo_input(message, message.from_user.id),
+                                lambda message: message.text.startswith("AiM"))
 
-    # Используем partial для передачи telegram_id
-    dp.register_message_handler(partial(handle_promo_input), lambda message: message.text.startswith("AiM"))
-    dp.register_message_handler(partial(save_fio), lambda message: message.text.startswith("ФИО: "))
+    dp.register_message_handler(lambda message: save_fio(message, message.from_user.id),
+                                lambda message: message.text.startswith("ФИО: "))
