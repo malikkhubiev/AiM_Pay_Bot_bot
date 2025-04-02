@@ -55,6 +55,9 @@ async def send_question(chat_id, telegram_id, question_id):
     log.info(f"text = {text}")
     keyboard = get_question_keyboard(question_id)
 
+    if telegram_id not in user_answers:
+        return  # Игнорируем, если пользователь не начал тест
+    
     user_answers[telegram_id]["current_question"] = question_id  # Обновляем текущий вопрос
 
     await bot.send_message(chat_id, text, reply_markup=keyboard)
@@ -64,6 +67,11 @@ async def handle_test_answer(callback_query: types.CallbackQuery):
     question_id, answer_id = int(question_id), int(answer_id)
     
     telegram_id = callback_query.from_user.id
+
+    # Проверяем, есть ли telegram_id в user_answers
+    if telegram_id not in user_answers:
+        await callback_query.answer("Тест ещё не начат или время истекло.", show_alert=True)
+        return
 
     # Проверяем, не пытается ли пользователь ответить на предыдущий вопрос
     if question_id != user_answers[telegram_id]["current_question"]:
