@@ -1,4 +1,5 @@
 from handlers import *
+from test_handlers import *
 from utils import *
 
 # Список хэндлеров
@@ -25,6 +26,7 @@ callback_handlers = {
     "report_list_as_file": report_list_as_file,
     "request_referral_chart": request_referral_chart,
     "tax_info": get_tax_info,
+    "start_test": start_test  # Добавляем тест в список хэндлеров
 }
 
 # Универсальная функция-обработчик
@@ -36,5 +38,6 @@ async def universal_callback_handler(callback_query: types.CallbackQuery):
 
 # Регистрация универсального обработчика и хэндлера ввода текста
 def register_callback_handlers(dp: Dispatcher):
+    dp.callback_query_handler(lambda c: c.data.startswith("test_"))(handle_test_answer)  # Обработка ответов теста
     dp.callback_query_handler()(universal_callback_handler)
     dp.message_handler()(handle_promo_input)

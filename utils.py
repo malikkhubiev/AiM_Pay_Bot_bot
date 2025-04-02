@@ -74,3 +74,23 @@ class ThrottlingMiddleware(BaseMiddleware):
             raise CancelHandler()
 
         self.user_timestamps[user_id] = current_time
+
+test_questions = [
+    {
+        "question": "Что такое машинное обучение?",
+        "answers": ["Алгоритм", "Язык программирования", "Фреймворк", "База данных"],
+        "correct": 0
+    },
+    {
+        "question": "Какая библиотека чаще всего используется для машинного обучения в Python?",
+        "answers": ["Django", "NumPy", "TensorFlow", "Flask"],
+        "correct": 2
+    },
+    {
+        "question": "Какой метод обучения использует размеченные данные?",
+        "answers": ["Надзорное обучение", "Безнадзорное обучение", "Реинфорсмент", "Эволюционные алгоритмы"],
+        "correct": 0
+    },
+    ...
+    # Добавь еще 22 вопроса в таком же формате
+]
