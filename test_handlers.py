@@ -30,6 +30,9 @@ async def send_question(chat_id, telegram_id, question_id):
     text = f"{question_id + 1}/{len(test_questions)}: {question_data['question']}"
     log.info(f"text = {text}")
     keyboard = get_question_keyboard(question_id)
+
+    user_answers[telegram_id]["current_question"] = question_id  # Обновляем текущий вопрос
+
     await bot.send_message(chat_id, text, reply_markup=keyboard)
 
 async def handle_test_answer(callback_query: types.CallbackQuery):
@@ -38,9 +41,13 @@ async def handle_test_answer(callback_query: types.CallbackQuery):
     
     telegram_id = callback_query.from_user.id
 
+    # Проверяем, не пытается ли пользователь ответить на предыдущий вопрос
+    if question_id != user_answers[telegram_id]["current_question"]:
+        return
+
     log.info(f"telegramId = {telegram_id}, question_id={question_id}, answer_id={answer_id}")
 
-    user_answers[telegram_id].append(answer_id)
+    user_answers[telegram_id]["answers"].append(answer_id)
     log.info("user_answers = {user_answers}")
     log.info(user_answers)
     
@@ -50,7 +57,7 @@ async def handle_test_answer(callback_query: types.CallbackQuery):
 async def finish_test(chat_id, telegram_id):
     log.info(f"finish_test called")
     correct_count = sum(
-        1 for i, ans in enumerate(user_answers[telegram_id])
+        1 for i, ans in enumerate(user_answers[telegram_id]["answers"])
         if ans == test_questions[i]["correct"]
     )
     log.info(f"correct_count = {correct_count}")

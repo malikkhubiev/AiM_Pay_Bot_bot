@@ -89,7 +89,7 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
             #         InlineKeyboardButton("Получить ссылку", callback_data='get_invite_link'),
             #     )
             keyboard.add(
-                InlineKeyboardButton("Сдать экзамен и получить сертфикат 🎓", callback_data='start_test'),
+                InlineKeyboardButton("Получить сертфикат 🎓", callback_data='pass_test'),
                 InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'),
                 InlineKeyboardButton("Заработать на новых клиентах 💸", callback_data='earn_new_clients')
             )
@@ -128,7 +128,7 @@ async def getting_started(message: types.Message, telegram_id: str, u_name: str 
 
         keyboard.add(
             InlineKeyboardButton("Оплатить курс 💰", callback_data='pay_course'),
-            InlineKeyboardButton("Сдать экзамен и получить сертфикат 🎓", callback_data='start_test'),
+            InlineKeyboardButton("Получить сертфикат 🎓", callback_data='pass_test'),
             InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'),
             InlineKeyboardButton("Заработать, советуя друзьям 💸", callback_data='earn_new_clients')
         )
@@ -912,6 +912,30 @@ async def get_tax_info(message: types.Message, telegram_id: str, u_name: str = N
     2. При выборе вида деятельности рекомендуем указать: «Реферальные выплаты» или «Услуги».
 
     <i>Пока вы платите налоги, вы защищаете себя и делаете реферальные выплаты законными.</i>
+    """
+    await bot.send_message(
+        chat_id=message.chat.id,
+        text=info_text,
+        parse_mode=ParseMode.HTML,
+        reply_markup=keyboard
+    )
+
+async def pass_test(message: types.Message, telegram_id: str, u_name: str = None):
+    log.info("pass_test called")
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(
+        InlineKeyboardButton("Сдать экзамен", callback_data='start_test'),
+        InlineKeyboardButton("Назад", callback_data='earn_new_clients')
+    )
+
+    info_text = """
+    Для получения сертификата вы пройдёте тест, состоящий из 25 вопросов.
+    Длительность теста 30 минут.
+    Для успешного прохождения теста необходимо ответить правильно на 80% вопросов.
+    Для подготовки к тесту рекомендуем изучить все видеоуроки, а также дополнительные материалы, хранящиеся в General.
+    Пересдать тест можно через 7 дней после прохождения.
+    Нажмите на кнопку, если уверены в своей подготовке.
+    Желаем успехов!
     """
     await bot.send_message(
         chat_id=message.chat.id,
