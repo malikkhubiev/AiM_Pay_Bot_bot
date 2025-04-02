@@ -27,7 +27,8 @@ callback_handlers = {
     "request_referral_chart": request_referral_chart,
     "tax_info": get_tax_info,
     "pass_test": pass_test,  # Добавляем тест в список хэндлеров
-    "start_test": start_test  # Добавляем тест в список хэндлеров
+    "start_test": start_test,  # Добавляем тест в список хэндлеров
+    "download_certificate": download_certificate
 }
 
 # Универсальная функция-обработчик
@@ -40,5 +41,8 @@ async def universal_callback_handler(callback_query: types.CallbackQuery):
 # Регистрация универсального обработчика и хэндлера ввода текста
 def register_callback_handlers(dp: Dispatcher):
     dp.callback_query_handler(lambda c: c.data.startswith("test_"))(handle_test_answer)  # Обработка ответов теста
+    
     dp.callback_query_handler()(universal_callback_handler)
     dp.message_handler()(handle_promo_input)
+
+    dp.register_message_handler(save_fio, lambda message: message.text.startswith("ФИО: "))

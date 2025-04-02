@@ -986,3 +986,36 @@ async def save_fio(message: types.Message, telegram_id: str, u_name: str = None)
             chat_id=message.chat.id,
             text=text
         )
+
+async def download_certificate(message: types.Message, telegram_id: str, u_name: str = None):
+    
+    log.info("download_certificate called")
+
+    url = SERVER_URL + "/generate_certificate"
+    user_data = {"telegram_id": telegram_id}
+
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(InlineKeyboardButton("Назад", callback_data="start"))
+
+    response = await send_request(url, method="POST", json=user_data)
+
+    # 1️⃣ Проверяем, что сервер не вернул ошибку
+    if isinstance(response, dict):
+        log.error(f"Ошибка при генерации сертификата: {response}")
+        await message.answer(response.get("message", "Ошибка при генерации сертификата"), reply_markup=keyboard)
+        return
+
+    # 2️⃣ Создаём BytesIO и задаём имя файла
+    try:
+        file_stream = io.BytesIO(response)  
+        file_stream.name = "certificate.pdf"  # Telegram требует имя файла
+
+        # 3️⃣ Отправляем файл пользователю
+        await message.answer_document(
+            InputFile(file_stream, filename="certificate.pdf"),
+            reply_markup=keyboard
+        )
+
+    except Exception as e:
+        log.error(f"Ошибка при отправке сертификата: {e}")
+        await message.answer("Ошибка при отправке сертификата", reply_markup=keyboard)
