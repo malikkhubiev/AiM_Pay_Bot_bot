@@ -34,10 +34,10 @@ async def start_test(message: types.Message, telegram_id: str, u_name: str = Non
         # "next_attempt": now + timedelta(days=7)
         "next_attempt": now + timedelta(minutes=2)
     }
-
+    log.info(f"Время истечения {now + timedelta(minutes=1)}")
     # Запланировать завершение теста через 30 минут
     # scheduler.add_job(finish_test, 'date', run_date=now + timedelta(minutes=30), args=[message.chat.id, telegram_id])
-    scheduler.add_job(finish_test, 'date', run_date=now + timedelta(minutes=1), args=[message.chat.id, telegram_id])
+    scheduler.add_job(lambda: asyncio.create_task(finish_test(message.chat.id, telegram_id)), 'date', run_date=now + timedelta(minutes=1))
     await send_question(message.chat.id, telegram_id, 0)
 
 async def send_question(chat_id, telegram_id, question_id):
