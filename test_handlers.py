@@ -96,6 +96,3 @@ async def finish_test(chat_id, telegram_id):
     # scheduler.add_job(lambda: user_answers.pop(telegram_id, None), 'date', run_date=datetime.now() + timedelta(days=7))
     scheduler.add_job(lambda: user_test_info.pop(telegram_id, None), 'date', run_date=datetime.now() + timedelta(minutes=1))
     scheduler.add_job(lambda: user_answers.pop(telegram_id, None), 'date', run_date=datetime.now() + timedelta(minutes=1))
-
-# Запуск планировщика
-scheduler.start()
