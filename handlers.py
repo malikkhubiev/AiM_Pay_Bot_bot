@@ -943,3 +943,46 @@ async def pass_test(message: types.Message, telegram_id: str, u_name: str = None
         parse_mode=ParseMode.HTML,
         reply_markup=keyboard
     )
+
+async def save_fio(message: types.Message, telegram_id: str, u_name: str = None):
+    
+    log.info("save_fio called")
+
+    fio_input = message.text.strip()
+    fio_value = fio_input.replace("ФИО: ", "").strip()
+    if not fio_value.strip():
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text="ФИО не может быть пустым"
+        )
+        return
+
+    save_fio_url = SERVER_URL + "/save_fio"
+    user_data = {
+        "telegram_id": telegram_id,
+        "fio": fio_value,
+    }
+    response = await send_request(
+        save_fio_url,
+        method="POST",
+        json=user_data
+    )
+    if response["status"] == "success":
+        keyboard = InlineKeyboardMarkup(row_width=1)
+        keyboard.add(
+            InlineKeyboardButton("Скачать сертификат", callback_data='download_certificate'),
+            InlineKeyboardButton("Сгенерировать ссылку", callback_data='generate_certificate_link'),
+            InlineKeyboardButton("Назад", callback_data='start')
+        )
+        message = response["data"]["message"]
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=message,
+            reply_markup=keyboard
+        )
+    elif response["status"] == "error":
+        text = response["message"]
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=text
+        )
