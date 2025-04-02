@@ -26,6 +26,7 @@ callback_handlers = {
     "report_list_as_file": report_list_as_file,
     "request_referral_chart": request_referral_chart,
     "tax_info": get_tax_info,
+    "pass_test": pass_test,  # Добавляем тест в список хэндлеров
     "start_test": start_test  # Добавляем тест в список хэндлеров
 }
 

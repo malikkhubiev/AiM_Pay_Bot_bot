@@ -1,8 +1,14 @@
 from loader import *
 from utils import test_questions, log
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from datetime import datetime, timedelta
 
 # Словарь для хранения ответов пользователей
 user_answers = {}
+# Словарь для хранения информации о прохождении теста
+user_test_info = {}
+# Планировщик задач
+scheduler = AsyncIOScheduler()
 
 def get_question_keyboard(question_id):
     question_data = test_questions[question_id]
@@ -12,8 +18,25 @@ def get_question_keyboard(question_id):
     return keyboard
 
 async def start_test(message: types.Message, telegram_id: str, u_name: str = None):
+    now = datetime.now()
+
+    # Проверяем, не прошло ли 7 дней с последнего теста
+    if telegram_id in user_test_info:
+        retry_time = user_test_info[telegram_id]["next_attempt"]
+        if now < retry_time:
+            await message.answer(f"Вы уже проходили тест. Повторно пройти можно {retry_time.strftime('%Y-%m-%d %H:%M:%S')} или позже.")
+            return
+
     log.info(f"Пользователь {telegram_id} начал тест")
-    user_answers[telegram_id] = []  # Обнуляем ответы пользователя
+    user_answers[telegram_id] = {"answers": [], "current_question": 0}
+    user_test_info[telegram_id] = {
+        "start_time": now,
+        # "next_attempt": now + timedelta(days=7)
+        "next_attempt": now + timedelta(minutes=1)
+    }
+
+    # Запланировать завершение теста через 30 минут
+    scheduler.add_job(finish_test, 'date', run_date=now + timedelta(minutes=30), args=[message.chat.id, telegram_id])
     await send_question(message.chat.id, telegram_id, 0)
 
 async def send_question(chat_id, telegram_id, question_id):
@@ -55,6 +78,9 @@ async def handle_test_answer(callback_query: types.CallbackQuery):
     await send_question(callback_query.message.chat.id, telegram_id, question_id + 1)
 
 async def finish_test(chat_id, telegram_id):
+    if telegram_id not in user_answers:
+        return
+    
     log.info(f"finish_test called")
     correct_count = sum(
         1 for i, ans in enumerate(user_answers[telegram_id]["answers"])
@@ -65,3 +91,11 @@ async def finish_test(chat_id, telegram_id):
     text = f"Тест завершён!\nВаш результат: {correct_count}/{len(test_questions)}"
     log.info(f"text = {text}")
     await bot.send_message(chat_id, text)
+    # Удаляем данные через 7 дней
+    # scheduler.add_job(lambda: user_test_info.pop(telegram_id, None), 'date', run_date=datetime.now() + timedelta(days=7))
+    # scheduler.add_job(lambda: user_answers.pop(telegram_id, None), 'date', run_date=datetime.now() + timedelta(days=7))
+    scheduler.add_job(lambda: user_test_info.pop(telegram_id, None), 'date', run_date=datetime.now() + timedelta(minutes=1))
+    scheduler.add_job(lambda: user_answers.pop(telegram_id, None), 'date', run_date=datetime.now() + timedelta(minutes=1))
+
+# Запуск планировщика
+scheduler.start()
