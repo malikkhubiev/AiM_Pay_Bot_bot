@@ -43,6 +43,5 @@ def register_callback_handlers(dp: Dispatcher):
     dp.callback_query_handler(lambda c: c.data.startswith("test_"))(handle_test_answer)  # Обработка ответов теста
     
     dp.callback_query_handler()(universal_callback_handler)
-    dp.message_handler()(handle_promo_input)
-
+    dp.register_message_handler(handle_promo_input, lambda message: message.text.startswith("AiM"))
     dp.register_message_handler(save_fio, lambda message: message.text.startswith("ФИО: "))
