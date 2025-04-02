@@ -974,10 +974,10 @@ async def save_fio(message: types.Message, telegram_id: str, u_name: str = None)
             InlineKeyboardButton("Сгенерировать ссылку", callback_data='generate_certificate_link'),
             InlineKeyboardButton("Назад", callback_data='start')
         )
-        message = response["data"]["message"]
+        text = response["data"]["message"]
         await bot.send_message(
             chat_id=message.chat.id,
-            text=message,
+            text=text,
             reply_markup=keyboard
         )
     elif response["status"] == "error":
