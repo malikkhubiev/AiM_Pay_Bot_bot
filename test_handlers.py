@@ -32,11 +32,12 @@ async def start_test(message: types.Message, telegram_id: str, u_name: str = Non
     user_test_info[telegram_id] = {
         "start_time": now,
         # "next_attempt": now + timedelta(days=7)
-        "next_attempt": now + timedelta(minutes=1)
+        "next_attempt": now + timedelta(minutes=2)
     }
 
     # Запланировать завершение теста через 30 минут
-    scheduler.add_job(finish_test, 'date', run_date=now + timedelta(minutes=30), args=[message.chat.id, telegram_id])
+    # scheduler.add_job(finish_test, 'date', run_date=now + timedelta(minutes=30), args=[message.chat.id, telegram_id])
+    scheduler.add_job(finish_test, 'date', run_date=now + timedelta(minutes=1), args=[message.chat.id, telegram_id])
     await send_question(message.chat.id, telegram_id, 0)
 
 async def send_question(chat_id, telegram_id, question_id):
@@ -94,5 +95,5 @@ async def finish_test(chat_id, telegram_id):
     # Удаляем данные через 7 дней
     # scheduler.add_job(lambda: user_test_info.pop(telegram_id, None), 'date', run_date=datetime.now() + timedelta(days=7))
     # scheduler.add_job(lambda: user_answers.pop(telegram_id, None), 'date', run_date=datetime.now() + timedelta(days=7))
-    scheduler.add_job(lambda: user_test_info.pop(telegram_id, None), 'date', run_date=datetime.now() + timedelta(minutes=1))
-    scheduler.add_job(lambda: user_answers.pop(telegram_id, None), 'date', run_date=datetime.now() + timedelta(minutes=1))
+    scheduler.add_job(lambda: user_test_info.pop(telegram_id, None), 'date', run_date=datetime.now() + timedelta(minutes=2))
+    scheduler.add_job(lambda: user_answers.pop(telegram_id, None), 'date', run_date=datetime.now() + timedelta(minutes=2))
