@@ -40,6 +40,8 @@ async def send_request(url, method="GET", headers=None, **kwargs):
                 return response.json()  # Возвращаем JSON-ответ
             elif content_type.startswith("application/vnd.openxmlformats"):
                 return response.content  # Возвращаем бинарные данные (файл)
+            elif content_type.startswith("application/pdf"):
+                return response.content  # Возвращаем бинарные данные (файл PDF)
             else:
                 logger.error(f"Неизвестный Content-Type: {content_type}")
                 return {"status": "error", "message": "Сервер вернул данные неизвестного формата."}
