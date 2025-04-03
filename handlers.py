@@ -991,6 +991,11 @@ async def download_certificate(message: types.Message, telegram_id: str, u_name:
     
     log.info("download_certificate called")
 
+    await bot.send_message(
+        chat_id=message.chat.id,
+        text="Обрабатываем запрос на генерацию сертификата..."
+    )
+
     url = SERVER_URL + "/generate_certificate"
     user_data = {"telegram_id": telegram_id}
 
@@ -1001,9 +1006,13 @@ async def download_certificate(message: types.Message, telegram_id: str, u_name:
 
     # 1️⃣ Проверяем, что сервер не вернул ошибку
     if isinstance(response, dict):
-        log.error(f"Ошибка при генерации сертификата: {response}")
-        await message.answer(response.get("message", "Ошибка при генерации сертификата"), reply_markup=keyboard)
-        return
+        if response["status"] == "error":
+            text = response["message"]
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text=text
+            )
+            return
 
     # 2️⃣ Создаём BytesIO и задаём имя файла
     try:
