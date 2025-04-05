@@ -1,5 +1,8 @@
 from loader import *
-from utils import test_questions, log
+from config import (
+    SERVER_URL
+)
+from utils import test_questions, log, send_request
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta
 
@@ -97,9 +100,30 @@ async def finish_test(chat_id, telegram_id):
     )
     log.info(f"correct_count = {correct_count}")
     
-    text = f"Тест завершён!\nВаш результат: {correct_count}/{len(test_questions)}. Введите ФИО в формате: 'ФИО: Иванов Иван Иванович'. Будьте аккуратны в написании, исправить ФИО невозможно. Дата установки ФИО считается датой формирования сертификата."
+    text = f"Тест завершён!\nВаш результат: {correct_count}/{len(test_questions)}."
     log.info(f"text = {text}")
     await bot.send_message(chat_id, text)
+
+    if correct_count / test_questions >= 0.8:
+        log.info(f"баллы набраны = {correct_count} из {test_questions} = {correct_count / test_questions}")
+
+        url = SERVER_URL + "/update_passed_exam"
+        user_data = {
+            "telegram_id": telegram_id
+        }
+        response = await send_request(
+            url,
+            method="POST",
+            json=user_data
+        )
+
+        if response["status"] == "success":
+            text = "Введите ФИО в формате: 'ФИО: Иванов Иван Иванович'. Будьте аккуратны в написании, исправить ФИО невозможно. Дата установки ФИО считается датой формирования сертификата."
+            await bot.send_message(chat_id, text)
+        elif response["status"] == "error":
+            text = response["message"]
+            await bot.send_message(chat_id, text)
+
     # Удаляем данные через 7 дней
     # scheduler.add_job(lambda: user_test_info.pop(telegram_id, None), 'date', run_date=datetime.now() + timedelta(days=7))
     # scheduler.add_job(lambda: user_answers.pop(telegram_id, None), 'date', run_date=datetime.now() + timedelta(days=7))

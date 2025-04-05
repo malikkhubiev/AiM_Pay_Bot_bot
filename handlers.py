@@ -922,27 +922,63 @@ async def get_tax_info(message: types.Message, telegram_id: str, u_name: str = N
 
 async def pass_test(message: types.Message, telegram_id: str, u_name: str = None):
     log.info("pass_test called")
-    keyboard = InlineKeyboardMarkup(row_width=1)
-    keyboard.add(
-        InlineKeyboardButton("Сдать экзамен", callback_data='start_test'),
-        InlineKeyboardButton("Назад", callback_data='earn_new_clients')
-    )
 
-    info_text = """
-    - Для получения сертификата вы пройдёте тест, состоящий из 25 вопросов.
-    - Длительность теста 30 минут.
-    - Для успешного прохождения теста необходимо ответить правильно на 80 и более процентов вопросов.
-    - Для подготовки к тесту рекомендуем изучить все видеоуроки, а также дополнительные материалы, хранящиеся в General.
-    - Пересдать тест можно через 7 дней после прохождения.
-    - Нажмите на кнопку, если уверены в своей подготовке.
-    - Желаем успехов!
-    """
     await bot.send_message(
         chat_id=message.chat.id,
-        text=info_text,
-        parse_mode=ParseMode.HTML,
-        reply_markup=keyboard
+        text="Получаем информацию о сертификации..."
     )
+
+    url = SERVER_URL + "/can_get_certificate"
+    user_data = {"telegram_id": telegram_id}
+
+    response = await send_request(
+        url,
+        method="POST",
+        json=user_data
+    )
+    if response["status"] == "success":
+        if response["result"] == "test":
+            keyboard = InlineKeyboardMarkup(row_width=1)
+            keyboard.add(
+                InlineKeyboardButton("Сдать экзамен", callback_data='start_test'),
+                InlineKeyboardButton("Назад", callback_data='earn_new_clients')
+            )
+
+            info_text = """
+            - Для получения сертификата вы пройдёте тест, состоящий из 25 вопросов.
+            - Длительность теста 30 минут.
+            - Для успешного прохождения теста необходимо ответить правильно на 80 и более процентов вопросов.
+            - Для подготовки к тесту рекомендуем изучить все видеоуроки, а также дополнительные материалы, хранящиеся в General.
+            - Пересдать тест можно через 7 дней после прохождения.
+            - Нажмите на кнопку, если уверены в своей подготовке.
+            - Желаем успехов!
+            """
+        elif response["result"] == "passed":
+            keyboard = InlineKeyboardMarkup(row_width=1)
+            keyboard.add(
+                InlineKeyboardButton("Скачать сертификат", callback_data='download_certificate'),
+                InlineKeyboardButton("Сгенерировать ссылку", callback_data='generate_certificate_link'),
+                InlineKeyboardButton("Назад", callback_data='start')
+            )
+
+            info_text = """
+Ваш тест на получение сертификата был успешно пройден!
+Вы можете скачать сертификат в формате PDF или перейти на страницу просмотра сертификата.
+Поздравляем 🎉)
+            """
+        
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=info_text,
+            parse_mode=ParseMode.HTML,
+            reply_markup=keyboard
+        )
+    elif response["status"] == "error":
+        text = response["message"]
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=text
+        )  
 
 async def save_fio(message: types.Message, telegram_id: str, u_name: str = None):
     
