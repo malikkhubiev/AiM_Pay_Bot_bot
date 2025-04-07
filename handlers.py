@@ -658,6 +658,7 @@ async def earn_new_clients(message: types.Message, telegram_id: str, u_name: str
         )
 
     keyboard.add(
+        InlineKeyboardButton("Список лидеров 🤴", callback_data='get_top_referrers'),
         InlineKeyboardButton("Привязать/изменить карту 💎", callback_data='bind_card'),
         InlineKeyboardButton("Получить реферальную ссылку 🚀", callback_data='get_referral'),
         InlineKeyboardButton("Сформировать отчёт о заработке 🏰", callback_data='generate_report'),
@@ -680,6 +681,7 @@ async def earn_new_clients(message: types.Message, telegram_id: str, u_name: str
 async def admin(message: types.Message, telegram_id: str, u_name: str = None):
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(
+        InlineKeyboardButton("Финансовые мультипликаторы 🏛", callback_data='get_source_referral_stats'),
         InlineKeyboardButton("Информация о выплатах 💳", callback_data='get_payout_balance'),
         InlineKeyboardButton("Промокодеры по датам 🐝", callback_data='get_promo_users_frequency'),
         InlineKeyboardButton("Оплаты по датам 🍰", callback_data='get_payments_frequency'),
@@ -853,6 +855,60 @@ async def get_payments_frequency(message: types.Message, telegram_id: str, u_nam
     elif response["status"] == "error":
         await message.answer(response["message"])
 
+async def get_source_referral_stats(message: types.Message, telegram_id: str, u_name: str = None):
+    log.info(f"Получена команда /get_source_referral_stats от {telegram_id}")
+
+    url = SERVER_URL + "/get_source_referral_stats"
+
+    if str(telegram_id) == str(MAIN_TELEGRAM_ID):
+        response = await send_request(
+            url,
+            method="POST",
+            json={"message": "hey"}
+        )
+        log.info(f"response {response}")
+
+        if response["status"] == "success":
+            result = response.get("result", {})
+            source_stats = result.get("source_stats")
+            referral_stats = result.get("referral_stats")
+
+            source_report = None
+            referral_report = None
+
+            if source_stats and len(source_stats) > 0:
+                source_report = await generate_conversion_stats_by_source(source_stats)
+            else:
+                source_report = "Нет данных по источникам."
+
+            if referral_stats and len(referral_stats) > 0:
+                referral_report = await generate_referral_conversion_stats(referral_stats)
+            else:
+                referral_report = "Нет данных по рефералам."
+
+            # Кнопка "Назад"
+            keyboard = InlineKeyboardMarkup(row_width=1)
+            keyboard.add(
+                InlineKeyboardButton("Назад", callback_data='admin'),
+            )
+
+            # Отправка отчёта по источникам
+            if source_report:
+                source_parts = [source_report[i:i+4000] for i in range(0, len(source_report), 4000)]
+                for part in source_parts:
+                    await message.answer(part, parse_mode="Markdown", reply_markup=keyboard if part == source_parts[-1] else None)
+
+            # Отправка отчёта по рефералам
+            if referral_report:
+                referral_parts = [referral_report[i:i+4000] for i in range(0, len(referral_report), 4000)]
+                for part in referral_parts:
+                    await message.answer(part, parse_mode="Markdown", reply_markup=keyboard if part == referral_parts[-1] else None)
+
+        elif response["status"] == "error":
+            await message.answer(response.get("message", "Произошла ошибка при получении отчёта."))
+    else:
+        await message.answer("У вас нет доступа к этой команде.")
+
 async def type_promo(message: types.Message, telegram_id: str, u_name: str = None):
     await bot.send_message(
         chat_id=message.chat.id,
@@ -1011,6 +1067,37 @@ async def save_fio(message: types.Message, telegram_id: str, u_name: str = None)
             InlineKeyboardButton("Назад", callback_data='start')
         )
         text = response["data"]["message"]
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=text,
+            reply_markup=keyboard
+        )
+    elif response["status"] == "error":
+        text = response["message"]
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=text
+        )
+
+async def get_top_referrers(message: types.Message, telegram_id: str, u_name: str = None):
+    
+    log.info("get_top_referrers called")
+
+    url = SERVER_URL + "/get_top_referrers"
+    user_data = {
+        "telegram_id": telegram_id
+    }
+    response = await send_request(
+        url,
+        method="POST",
+        json=user_data
+    )
+    if response["status"] == "success":
+        keyboard = InlineKeyboardMarkup(row_width=1)
+        keyboard.add(
+            InlineKeyboardButton("Назад", callback_data='earn_new_clients')
+        )
+        text = response["top"]
         await bot.send_message(
             chat_id=message.chat.id,
             text=text,

@@ -22,12 +22,14 @@ callback_handlers = {
     "get_referral": send_referral_link,
     "bind_card": bind_card,
     "generate_report": generate_clients_report,
+    "get_source_referral_stats": get_source_referral_stats,
+    "get_top_referrers": get_top_referrers,
     "report_list_as_is": report_list_as_is,
     "report_list_as_file": report_list_as_file,
     "request_referral_chart": request_referral_chart,
     "tax_info": get_tax_info,
-    "pass_test": pass_test,  # Добавляем тест в список хэндлеров
-    "start_test": start_test,  # Добавляем тест в список хэндлеров
+    "get_certificate": get_certificate,
+    "start_test": start_test,
     "download_certificate": download_certificate
 }
 
