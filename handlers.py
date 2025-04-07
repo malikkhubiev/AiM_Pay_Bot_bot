@@ -89,7 +89,7 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
             #         InlineKeyboardButton("Получить ссылку", callback_data='get_invite_link'),
             #     )
             keyboard.add(
-                InlineKeyboardButton("Получить сертфикат 🎓", callback_data='pass_test'),
+                InlineKeyboardButton("Получить сертфикат 🎓", callback_data='get_certificate'),
                 InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'),
                 InlineKeyboardButton("Заработать на новых клиентах 💸", callback_data='earn_new_clients')
             )
@@ -128,7 +128,7 @@ async def getting_started(message: types.Message, telegram_id: str, u_name: str 
 
         keyboard.add(
             InlineKeyboardButton("Оплатить курс 💰", callback_data='pay_course'),
-            InlineKeyboardButton("Получить сертфикат 🎓", callback_data='pass_test'),
+            InlineKeyboardButton("Получить сертфикат 🎓", callback_data='get_certificate'),
             InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'),
             InlineKeyboardButton("Заработать, советуя друзьям 💸", callback_data='earn_new_clients')
         )
@@ -920,29 +920,65 @@ async def get_tax_info(message: types.Message, telegram_id: str, u_name: str = N
         reply_markup=keyboard
     )
 
-async def pass_test(message: types.Message, telegram_id: str, u_name: str = None):
-    log.info("pass_test called")
-    keyboard = InlineKeyboardMarkup(row_width=1)
-    keyboard.add(
-        InlineKeyboardButton("Сдать экзамен", callback_data='start_test'),
-        InlineKeyboardButton("Назад", callback_data='earn_new_clients')
+async def get_certificate(message: types.Message, telegram_id: str, u_name: str = None):
+    log.info("get_certificate called")
+
+    await bot.send_message(
+        chat_id=message.chat.id,
+        text="Получаем информацию о сертификации..."
     )
 
-    info_text = """
+    url = SERVER_URL + "/can_get_certificate"
+    user_data = {"telegram_id": telegram_id}
+
+    response = await send_request(
+        url,
+        method="POST",
+        json=user_data
+    )
+    if response["status"] == "success":
+        if response["result"] == "test":
+            keyboard = InlineKeyboardMarkup(row_width=1)
+            keyboard.add(
+                InlineKeyboardButton("Сдать тест", callback_data='start_test'),
+                InlineKeyboardButton("Назад", callback_data='earn_new_clients')
+            )
+
+            info_text = """
 Для получения сертификата вы пройдёте тест, состоящий из 25 вопросов.
     - Длительность теста 30 минут.
     - Для успешного прохождения теста необходимо ответить правильно на 80 и более процентов вопросов.
     - Для подготовки к тесту рекомендуем изучить все видеоуроки, а также дополнительные материалы, хранящиеся в General.
-    - Пересдать тест можно через 7 дней после прохождения.
+    - Пересдать тест можно через 7 дней после начала прохождения.
     - Нажмите на кнопку, если уверены в своей подготовке.
-    - Желаем успехов!
-    """
-    await bot.send_message(
-        chat_id=message.chat.id,
-        text=info_text,
-        parse_mode=ParseMode.HTML,
-        reply_markup=keyboard
-    )
+Желаем успехов!
+            """
+        elif response["result"] == "passed":
+            keyboard = InlineKeyboardMarkup(row_width=1)
+            keyboard.add(
+                InlineKeyboardButton("Скачать сертификат", callback_data='download_certificate'),
+                InlineKeyboardButton("Сгенерировать ссылку", callback_data='generate_certificate_link'),
+                InlineKeyboardButton("Назад", callback_data='start')
+            )
+
+            info_text = """
+Ваш тест на получение сертификата был успешно пройден!
+Вы можете скачать сертификат в формате PDF или перейти на страницу просмотра сертификата.
+Поздравляем 🎉)
+            """
+        
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=info_text,
+            parse_mode=ParseMode.HTML,
+            reply_markup=keyboard
+        )
+    elif response["status"] == "error":
+        text = response["message"]
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=text
+        )  
 
 async def save_fio(message: types.Message, telegram_id: str, u_name: str = None):
     
@@ -1028,3 +1064,23 @@ async def download_certificate(message: types.Message, telegram_id: str, u_name:
     except Exception as e:
         log.error(f"Ошибка при отправке сертификата: {e}")
         await message.answer("Ошибка при отправке сертификата", reply_markup=keyboard)
+
+async def generate_certificate_link(message: types.Message, telegram_id: str, u_name: str = None):
+    
+    log.info("generate_certificate_link called")
+
+    await bot.send_message(
+        chat_id=message.chat.id,
+        text="Обрабатываем запрос на генерацию ссылки..."
+    )
+
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(InlineKeyboardButton("Назад", callback_data="start"))
+
+    text = f"Вы можете посмотреть сертификат по следующей ссылке: {SERVER_URL}/certificate/{telegram_id}"
+
+    await bot.send_message(
+        chat_id=message.chat.id,
+        text=text,
+        reply_markup=keyboard
+    )
