@@ -127,7 +127,6 @@ async def finish_test(chat_id, telegram_id):
             method="POST",
             json=user_data
         )
-
         if response["status"] == "success":
             text = "Введите ФИО в формате: 'ФИО: Иванов Иван Иванович'. Будьте аккуратны в написании, исправить ФИО невозможно. Дата установки ФИО считается датой формирования сертификата."
             await bot.send_message(chat_id, text)

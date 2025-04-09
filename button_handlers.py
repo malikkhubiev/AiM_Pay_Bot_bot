@@ -30,6 +30,7 @@ callback_handlers = {
     "tax_info": get_tax_info,
     "get_certificate": get_certificate,
     "start_test": start_test,
+    "generate_certificate_link": generate_certificate_link,
     "download_certificate": download_certificate
 }
 
