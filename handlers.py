@@ -858,7 +858,7 @@ async def get_payments_frequency(message: types.Message, telegram_id: str, u_nam
 async def get_source_referral_stats(message: types.Message, telegram_id: str, u_name: str = None):
     log.info(f"Получена команда /get_source_referral_stats от {telegram_id}")
 
-    url = SERVER_URL + "/get_source_referral_stats"
+    url = SERVER_URL + "/get_multiplicators"
 
     if str(telegram_id) == str(MAIN_TELEGRAM_ID):
         response = await send_request(

@@ -114,10 +114,9 @@ async def finish_test(chat_id, telegram_id):
     text = f"Тест завершён!\nВаш результат: {correct_count}/{len(test_questions)}."
     log.info(f"text = {text}")
     await bot.send_message(chat_id, text)
+    log.info(f"баллы набраны = {correct_count} из {test_questions} = {correct_count / test_questions}")
 
     if correct_count / test_questions >= 0.8:
-        log.info(f"баллы набраны = {correct_count} из {test_questions} = {correct_count / test_questions}")
-
         url = SERVER_URL + "/update_passed_exam"
         user_data = {
             "telegram_id": telegram_id
