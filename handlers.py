@@ -873,24 +873,39 @@ async def get_source_referral_stats(message: types.Message, telegram_id: str, u_
             source_stats = result.get("source_stats")
             referral_stats = result.get("referral_stats")
 
-            source_report = None
-            referral_report = None
-
+            # Формирование отчета по источникам
+            source_report = "Отчет по источникам:\n\n"
             if source_stats and len(source_stats) > 0:
-                source_report = await generate_conversion_stats_by_source(source_stats)
+                for source in source_stats:
+                    source_report += f"Источник: {source.get('source', 'Неизвестно')}\n"
+                    source_report += f"Всего: {source.get('total', 0)}\n"
+                    source_report += f"Зарегистрировались: {source.get('registered', 0)}\n"
+                    source_report += f"% Регистраций: {source.get('registration_percentage', '0.0')}%\n"
+                    source_report += f"Оплатили: {source.get('paid', 0)}\n"
+                    source_report += f"% Оплат от всех: {source.get('paid_percentage', '0.0')}%\n"
+                    source_report += f"% Оплат от зарегистрированных: {source.get('paid_registration_percentage', '0.0')}%\n"
+                    source_report += "\n"  # Разделение для следующего источника
             else:
-                source_report = "Нет данных по источникам."
+                source_report += "Нет данных по источникам.\n"
 
+            # Формирование отчета по рефералам
+            referral_report = "Отчет по рефералам:\n\n"
             if referral_stats and len(referral_stats) > 0:
-                referral_report = await generate_referral_conversion_stats(referral_stats)
+                for referral in referral_stats:
+                    referral_report += f"Реферер ID: {referral.get('referrer_id', 'Неизвестно')}\n"
+                    referral_report += f"Пришло по рефералке: {referral.get('referred', 0)}\n"
+                    referral_report += f"Зарегистрировались: {referral.get('registered', 0)}\n"
+                    referral_report += f"% Регистраций: {referral.get('registration_percentage', '0.0')}%\n"
+                    referral_report += f"Оплатили: {referral.get('paid', 0)}\n"
+                    referral_report += f"% Оплат от всех: {referral.get('paid_percentage', '0.0')}%\n"
+                    referral_report += f"% Оплат от зарегистрированных: {referral.get('paid_registration_percentage', '0.0')}%\n"
+                    referral_report += "\n"  # Разделение для следующего реферала
             else:
-                referral_report = "Нет данных по рефералам."
+                referral_report += "Нет данных по рефералам.\n"
 
             # Кнопка "Назад"
             keyboard = InlineKeyboardMarkup(row_width=1)
-            keyboard.add(
-                InlineKeyboardButton("Назад", callback_data='admin'),
-            )
+            keyboard.add(InlineKeyboardButton("Назад", callback_data='admin'))
 
             # Отправка отчёта по источникам
             if source_report:
