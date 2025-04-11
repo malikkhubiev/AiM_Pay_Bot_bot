@@ -916,6 +916,9 @@ async def get_source_referral_stats(message: types.Message, telegram_id: str, u_
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(InlineKeyboardButton("Назад", callback_data='admin'))
 
+            log.info(f"Before source_report {source_report}")
+            log.info(f"Before referral_report {referral_report}")
+
             # Отправка отчёта по источникам
             if source_report:
                 source_parts = [source_report[i:i+4000] for i in range(0, len(source_report), 4000)]
