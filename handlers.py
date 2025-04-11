@@ -930,7 +930,7 @@ async def type_promo(message: types.Message, telegram_id: str, u_name: str = Non
         text="Введите промокод без пробелов:"
     )
 
-async def handle_promo_input(message: types.Message):
+async def handle_promo_input(message: types.Message, telegram_id: str, u_name: str = None):
     promo_code = message.text.strip()
     log.info("Введённый промокод")
     if str(promo_code) == str(PROMO_CODE):
