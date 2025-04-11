@@ -870,27 +870,29 @@ async def get_source_referral_stats(message: types.Message, telegram_id: str, u_
 
         if response["status"] == "success":
             result = response.get("result", {})
-            source_stats = result.get("source_stats")
-            referral_stats = result.get("referral_stats")
+            source_stats = result.get("source_stats", [])
+            referral_stats = result.get("referral_stats", [])
+            log.info(f"source_stats {source_stats}")
+            log.info(f"referral_stats {referral_stats}")
 
             # Формирование отчета по источникам
             source_report = "Отчет по источникам:\n\n"
-            if source_stats and len(source_stats) > 0:
+            if source_stats:
                 for source in source_stats:
                     source_report += f"Источник: {source.get('source', 'Неизвестно')}\n"
-                    source_report += f"Всего: {source.get('total', 0)}\n"
-                    source_report += f"Зарегистрировались: {source.get('registered', 0)}\n"
-                    source_report += f"% Регистраций: {source.get('registration_percentage', '0.0')}%\n"
-                    source_report += f"Оплатили: {source.get('paid', 0)}\n"
-                    source_report += f"% Оплат от всех: {source.get('paid_percentage', '0.0')}%\n"
-                    source_report += f"% Оплат от зарегистрированных: {source.get('paid_registration_percentage', '0.0')}%\n"
+                    source_report += f"Всего: {source.get('Всего', 0)}\n"
+                    source_report += f"Зарегистрировались: {source.get('Зарегистрировались', 0)}\n"
+                    source_report += f"% Регистраций: {source.get('% Регистраций', '0.0')}%\n"
+                    source_report += f"Оплатили: {source.get('Оплатили', 0)}\n"
+                    source_report += f"% Оплат от всех: {source.get('% Оплат от всех', '0.0')}%\n"
+                    source_report += f"% Оплат от зарегистрированных: {source.get('% Оплат от зарегистрированных', '0.0')}%\n"
                     source_report += "\n"  # Разделение для следующего источника
             else:
                 source_report += "Нет данных по источникам.\n"
 
             # Формирование отчета по рефералам
             referral_report = "Отчет по рефералам:\n\n"
-            if referral_stats and len(referral_stats) > 0:
+            if referral_stats:
                 for referral in referral_stats:
                     referral_report += f"Реферер ID: {referral.get('referrer_id', 'Неизвестно')}\n"
                     referral_report += f"Пришло по рефералке: {referral.get('referred', 0)}\n"
@@ -919,8 +921,8 @@ async def get_source_referral_stats(message: types.Message, telegram_id: str, u_
                 for part in referral_parts:
                     await message.answer(part, parse_mode="Markdown", reply_markup=keyboard if part == referral_parts[-1] else None)
 
-        elif response["status"] == "error":
-            await message.answer(response.get("message", "Произошла ошибка при получении отчёта."))
+            elif response["status"] == "error":
+                await message.answer(response.get("message", "Произошла ошибка при получении отчёта."))
     else:
         await message.answer("У вас нет доступа к этой команде.")
 
