@@ -14,6 +14,7 @@ from config import (
     PROMO_CODE
 )
 import aiohttp
+import asyncio
 from analytics import send_event_to_ga4
 from utils import *
 from loader import *
@@ -926,8 +927,10 @@ async def get_source_referral_stats(message: types.Message, telegram_id: str, u_
                     await bot.send_message(
                         chat_id=message.chat.id,
                         text=part,
-                        parse_mode="HTML"
+                        parse_mode="HTML",
+                        reply_markup=keyboard if part == source_parts[-1] else None
                     )
+                    await asyncio.sleep(1)
 
             # Отправка отчёта по рефералам
             if referral_report:
@@ -936,7 +939,8 @@ async def get_source_referral_stats(message: types.Message, telegram_id: str, u_
                     await bot.send_message(
                         chat_id=message.chat.id,
                         text=part,
-                        parse_mode="HTML"
+                        parse_mode="HTML",
+                        reply_markup=keyboard if part == referral_parts[-1] else None
                     )
 
             elif response["status"] == "error":
