@@ -879,32 +879,39 @@ async def get_source_referral_stats(message: types.Message, telegram_id: str, u_
             source_report = "Отчет по источникам:\n\n"
             if source_stats:
                 for source in source_stats:
-                    source_report += f"Источник: {source.get('source', 'Неизвестно')}\n"
-                    source_report += f"Всего: {source.get('Всего', 0)}\n"
-                    source_report += f"Зарегистрировались: {source.get('Зарегистрировались', 0)}\n"
-                    source_report += f"% Регистраций: {source.get('% Регистраций', '0.0')}%\n"
-                    source_report += f"Оплатили: {source.get('Оплатили', 0)}\n"
-                    source_report += f"% Оплат от всех: {source.get('% Оплат от всех', '0.0')}%\n"
-                    source_report += f"% Оплат от зарегистрированных: {source.get('% Оплат от зарегистрированных', '0.0')}%\n"
+                    source_report += f"- Источник: {source.get('Источник', 'Неизвестно')}\n"
+                    source_report += f"- Всего: {source.get('Всего', 0)}\n"
+                    source_report += f"- Зарегистрировались: {source.get('Зарегистрировались', 0)}\n"
+                    source_report += f"- Процент регистраций: {source.get('% Регистраций', '0.0')}%\n"
+                    source_report += f"- Оплатили: {source.get('Оплатили', 0)}\n"
+                    source_report += f"- Процент оплат от всех: {source.get('% Оплат от всех', '0.0')}%\n"
+                    source_report += f"- Процент оплат от зарегистрированных: {source.get('% Оплат от зарегистрированных', '0.0')}%\n"
                     source_report += "\n"  # Разделение для следующего источника
             else:
                 source_report += "Нет данных по источникам.\n"
-
             # Формирование отчета по рефералам
             referral_report = "Отчет по рефералам:\n\n"
+
             if referral_stats:
                 for referral in referral_stats:
-                    referral_report += f"Реферер ID: {referral.get('referrer_id', 'Неизвестно')}\n"
-                    referral_report += f"Пришло по рефералке: {referral.get('referred', 0)}\n"
-                    referral_report += f"Зарегистрировались: {referral.get('registered', 0)}\n"
-                    referral_report += f"% Регистраций: {referral.get('registration_percentage', '0.0')}%\n"
-                    referral_report += f"Оплатили: {referral.get('paid', 0)}\n"
-                    referral_report += f"% Оплат от всех: {referral.get('paid_percentage', '0.0')}%\n"
-                    referral_report += f"% Оплат от зарегистрированных: {referral.get('paid_registration_percentage', '0.0')}%\n"
+                    referrer_id = referral.get('Реферер ID', 'Неизвестно')
+                    referred = referral.get('Пришло по рефералке', 0)
+                    registered = referral.get('Зарегистрировались', 0)
+                    registration_percentage = referral.get('% Регистраций', '0.0')
+                    paid = referral.get('Оплатили', 0)
+                    paid_percentage = referral.get('% Оплат от всех', '0.0')
+                    paid_registration_percentage = referral.get('% Оплат от зарегистрированных', '0.0')
+
+                    referral_report += f"Реферер ID: {referrer_id}\n"
+                    referral_report += f"Пришло по рефералке: {referred}\n"
+                    referral_report += f"Зарегистрировались: {registered}\n"
+                    referral_report += f"% Регистраций: {registration_percentage}%\n"
+                    referral_report += f"Оплатили: {paid}\n"
+                    referral_report += f"% Оплат от всех: {paid_percentage}%\n"
+                    referral_report += f"% Оплат от зарегистрированных: {paid_registration_percentage}%\n"
                     referral_report += "\n"  # Разделение для следующего реферала
             else:
                 referral_report += "Нет данных по рефералам.\n"
-
             # Кнопка "Назад"
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(InlineKeyboardButton("Назад", callback_data='admin'))
