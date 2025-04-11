@@ -864,7 +864,7 @@ async def get_source_referral_stats(message: types.Message, telegram_id: str, u_
         response = await send_request(
             url,
             method="POST",
-            json={"message": "hey"}
+            json={"telegram_id": telegram_id}
         )
         log.info(f"response {response}")
 
