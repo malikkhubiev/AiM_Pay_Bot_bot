@@ -923,13 +923,23 @@ async def get_source_referral_stats(message: types.Message, telegram_id: str, u_
             if source_report:
                 source_parts = [source_report[i:i+4000] for i in range(0, len(source_report), 4000)]
                 for part in source_parts:
-                    await message.answer(part, parse_mode="Markdown", reply_markup=keyboard if part == source_parts[-1] else None)
+                    await bot.send_message(
+                        chat_id=message.chat.id,
+                        text=part,
+                        parse_mode="Markdown",
+                        reply_markup=keyboard if part == source_parts[-1] else None
+                    )
 
             # Отправка отчёта по рефералам
             if referral_report:
                 referral_parts = [referral_report[i:i+4000] for i in range(0, len(referral_report), 4000)]
                 for part in referral_parts:
-                    await message.answer(part, parse_mode="Markdown", reply_markup=keyboard if part == referral_parts[-1] else None)
+                    await bot.send_message(
+                        chat_id=message.chat.id,
+                        text=part,
+                        parse_mode="Markdown",
+                        reply_markup=keyboard if part == referral_parts[-1] else None
+                    )
 
             elif response["status"] == "error":
                 await message.answer(response.get("message", "Произошла ошибка при получении отчёта."))
