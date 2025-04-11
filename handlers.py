@@ -926,8 +926,7 @@ async def get_source_referral_stats(message: types.Message, telegram_id: str, u_
                     await bot.send_message(
                         chat_id=message.chat.id,
                         text=part,
-                        parse_mode="Markdown",
-                        reply_markup=keyboard if part == source_parts[-1] else None
+                        parse_mode="HTML"
                     )
 
             # Отправка отчёта по рефералам
@@ -937,8 +936,7 @@ async def get_source_referral_stats(message: types.Message, telegram_id: str, u_
                     await bot.send_message(
                         chat_id=message.chat.id,
                         text=part,
-                        parse_mode="Markdown",
-                        reply_markup=keyboard if part == referral_parts[-1] else None
+                        parse_mode="HTML"
                     )
 
             elif response["status"] == "error":
