@@ -13,8 +13,8 @@ user_test_info = {}
 # Планировщик задач
 scheduler = AsyncIOScheduler()
 
-TEST_DURATION = timedelta(seconds=20)
-RETRY_TIMEOUT = timedelta(minutes=2)
+TEST_DURATION = timedelta(minutes=30)
+RETRY_TIMEOUT = timedelta(days=3)
 
 def get_question_keyboard(question_id):
     question_data = test_questions[question_id]

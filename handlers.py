@@ -903,13 +903,13 @@ async def get_source_referral_stats(message: types.Message, telegram_id: str, u_
                     paid_percentage = referral.get('% Оплат от всех', '0.0')
                     paid_registration_percentage = referral.get('% Оплат от зарегистрированных', '0.0')
 
-                    referral_report += f"Реферер ID: {referrer_id}\n"
-                    referral_report += f"Пришло по рефералке: {referred}\n"
-                    referral_report += f"Зарегистрировались: {registered}\n"
-                    referral_report += f"% Регистраций: {registration_percentage}%\n"
-                    referral_report += f"Оплатили: {paid}\n"
-                    referral_report += f"% Оплат от всех: {paid_percentage}%\n"
-                    referral_report += f"% Оплат от зарегистрированных: {paid_registration_percentage}%\n"
+                    referral_report += f"- Реферер ID: {referrer_id}\n"
+                    referral_report += f"- Пришло по рефералке: {referred}\n"
+                    referral_report += f"- Зарегистрировались: {registered}\n"
+                    referral_report += f"- Процент регистраций: {registration_percentage}%\n"
+                    referral_report += f"- Оплатили: {paid}\n"
+                    referral_report += f"- Процент оплат от всех: {paid_percentage}%\n"
+                    referral_report += f"- Процент оплат от зарегистрированных: {paid_registration_percentage}%\n"
                     referral_report += "\n"  # Разделение для следующего реферала
             else:
                 referral_report += "Нет данных по рефералам.\n"
@@ -1044,7 +1044,7 @@ async def get_certificate(message: types.Message, telegram_id: str, u_name: str 
     - Длительность теста 30 минут.
     - Для успешного прохождения теста необходимо ответить правильно на 80 и более процентов вопросов.
     - Для подготовки к тесту рекомендуем изучить все видеоуроки, а также дополнительные материалы, хранящиеся в General.
-    - Пересдать тест можно через 7 дней после начала прохождения.
+    - Пересдать тест можно через 3 дня после начала прохождения.
     - Нажмите на кнопку, если уверены в своей подготовке.
 Желаем успехов!
             """
