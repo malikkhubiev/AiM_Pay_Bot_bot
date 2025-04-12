@@ -1202,7 +1202,7 @@ async def generate_certificate_link(message: types.Message, telegram_id: str, u_
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(InlineKeyboardButton("Назад", callback_data="start"))
 
-    text = f"Вы можете посмотреть сертификат по следующей ссылке: {SERVER_URL}/certificate/CERT-{telegram_id}"
+    text = f"Вы можете посмотреть сертификат по следующей ссылке: {SERVER_URL}/certifications/CERT-{telegram_id}"
 
     await bot.send_message(
         chat_id=message.chat.id,
