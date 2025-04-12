@@ -682,7 +682,7 @@ async def earn_new_clients(message: types.Message, telegram_id: str, u_name: str
 async def admin(message: types.Message, telegram_id: str, u_name: str = None):
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(
-        InlineKeyboardButton("Финансовые мультипликаторы 🏛", callback_data='get_source_referral_stats'),
+        InlineKeyboardButton("Мультипликаторы 🏛", callback_data='get_source_referral_stats'),
         InlineKeyboardButton("Информация о выплатах 💳", callback_data='get_payout_balance'),
         InlineKeyboardButton("Промокодеры по датам 🐝", callback_data='get_promo_users_frequency'),
         InlineKeyboardButton("Оплаты по датам 🍰", callback_data='get_payments_frequency'),
@@ -743,8 +743,7 @@ async def get_payout_balance(message: types.Message, telegram_id: str, u_name: s
                     log.info(f"users перебор начался")
                     user_info = (
                         f"<b>Telegram ID:</b> {user['id']}\n"
-                        f"<b>Пользователь:</b> {user['name']}\n"
-                        f"<b>Количество привлечённых рефералов:</b> {user['paid_referrals']}\n\n"
+                        f"<b>Пользователь:</b> {user['name']}\n\n"
                     )
                     log.info(f"user_info {user_info}")
                     await bot.send_message(
