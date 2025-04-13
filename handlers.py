@@ -89,7 +89,7 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
             #     keyboard.add(
             #         InlineKeyboardButton("Получить ссылку", callback_data='get_invite_link'),
             #     )
-            info_text = response["response_message"] + "\n💎Мы очень рады тебя видеть!💎\n\nОПЛАТИ КУРС, получи ЗНАНИЯ и ЗАРАБОТАЙ, советуя друзьям КАЧЕСТВЕННЫЙ ПРОДУКТ."
+            info_text = response["response_message"] + "\n\n💎Мы очень рады тебя видеть!💎\n\nОПЛАТИ КУРС, получи ЗНАНИЯ и ЗАРАБОТАЙ, советуя друзьям КАЧЕСТВЕННЫЙ ПРОДУКТ."
             keyboard.add(
                 InlineKeyboardButton("Получить сертфикат 🎓", callback_data='get_certificate'),
                 InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'),
