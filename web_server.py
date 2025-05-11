@@ -88,10 +88,11 @@ def web_server():
     
     async def kick_user(request):
         try:
+            log.info("kick_user called")
             data = await request.json()
             tg_id = data.get("telegram_id")
             
-            log.info("Начало обработки запроса...")
+            log.info(f"Начало обработки запроса для {tg_id}...")
             
             await bot.kick_chat_member(chat_id=GROUP_ID, user_id=tg_id, until_date=int(time.time()))
             await bot.unban_chat_member(chat_id=GROUP_ID, user_id=tg_id)
