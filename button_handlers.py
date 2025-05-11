@@ -56,9 +56,10 @@ def register_callback_handlers(dp: Dispatcher):
     dp.register_message_handler(lambda message: save_fio(message, message.from_user.id),
                                 lambda message: message.text.startswith("ФИО: "))
     
+    dp.register_message_handler(lambda message: handle_fake_payment_command(message, message.from_user.id),
+                                lambda message: message.text.startswith("Добавить: "))
+
     # Регистрация хэндлера для фотографий
     dp.register_message_handler(lambda message: handle_photo(message, message.from_user.id),
                                 content_types=types.ContentType.PHOTO)
     
-    dp.register_message_handler(lambda message: handle_fake_payment_command(message, message.from_user.id),
-                                lambda message: message.text.startswith("Добавить: "))

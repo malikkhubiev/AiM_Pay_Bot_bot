@@ -1296,14 +1296,16 @@ async def handle_photo(message: Message, telegram_id: str, u_name: str = None):
         log.error(f"Ошибка при отправке фото админу: {e}")
 
 
-async def handle_fake_payment_command(message: types.Message, telegram_id: str):
+async def handle_fake_payment_command(message: types.Message, telegram_id: str, u_name: str = None):
     """
     Обработчик команды добавления пользователя в группу.
     """
     log.info(f"handle_fake_payment_command called by {telegram_id}")
+    log.info(f"telegram_id {telegram_id}")
+    log.info(f"MAIN_TELEGRAM_ID {MAIN_TELEGRAM_ID}")
 
     # Проверяем, что это именно админ отправил команду
-    if telegram_id == MAIN_TELEGRAM_ID:
+    if str(telegram_id) == str(MAIN_TELEGRAM_ID):
         log.info(f"main tg id")
         
         add_input = message.text.strip()
@@ -1311,7 +1313,7 @@ async def handle_fake_payment_command(message: types.Message, telegram_id: str):
 
         new_user_id = add_input.replace("Добавить: ", "").strip()
         log.info(f"new_user_id {new_user_id}")
-        
+
         if not new_user_id.strip():
             await bot.send_message(
                 chat_id=message.chat.id,
