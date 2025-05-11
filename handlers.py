@@ -1285,7 +1285,7 @@ async def handle_photo(message: Message, telegram_id: str, u_name: str = None):
     try:
         # Получаем ID последней версии фото (наивысшее качество)
         photo_id = message.photo[-1].file_id
-        caption = f"Пользователь с Telegram ID: {telegram_id} отправил фото."
+        caption = f"{telegram_id}"
 
         # Пересылаем изображение определённому пользователю
         await bot.send_photo(chat_id=MAIN_TELEGRAM_ID, photo=photo_id, caption=caption)
@@ -1304,7 +1304,20 @@ async def handle_fake_payment_command(message: types.Message, telegram_id: str):
 
     # Проверяем, что это именно админ отправил команду
     if telegram_id == MAIN_TELEGRAM_ID:
-        new_user_id = message.text.split("Добавить: ")[1].strip()
+        log.info(f"main tg id")
+        
+        add_input = message.text.strip()
+        log.info(f"add_input {add_input}")
+
+        new_user_id = add_input.replace("Добавить: ", "").strip()
+        log.info(f"new_user_id {new_user_id}")
+        
+        if not new_user_id.strip():
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text="ФИО не может быть пустым"
+            )
+            return
         
         fake_payment_url = SERVER_URL + "/fake_payment"
         user_data = {"telegram_id": new_user_id}
