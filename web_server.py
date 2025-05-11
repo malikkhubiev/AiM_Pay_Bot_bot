@@ -1,5 +1,5 @@
 import os
-import time
+from datetime import datetime, timedelta
 from aiohttp import web
 from loader import *
 from utils import *
@@ -96,7 +96,8 @@ def web_server():
             
             log.info(f"Начало обработки запроса для {tg_id}...")
             
-            await bot.kick_chat_member(chat_id=GROUP_ID, user_id=tg_id, until_date=int(time.time()))
+            until_date = datetime.now()
+            await bot.kick_chat_member(chat_id=GROUP_ID, user_id=tg_id, until_date=int(until_date.timestamp()))
             await bot.unban_chat_member(chat_id=GROUP_ID, user_id=tg_id)
 
             return web.json_response({"status": f"{tg_id} kicked"}, status=200)
