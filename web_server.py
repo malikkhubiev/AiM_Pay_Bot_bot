@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from aiohttp import web
 from loader import *
 from utils import *
@@ -50,8 +50,8 @@ def web_server():
             invite_link: ChatInviteLink = await bot.create_chat_invite_link(
                 chat_id=GROUP_ID,
                 member_limit=1,
-                # expire_date=datetime.now(datetime.timezone.utc) + timedelta(minutes=30)
-                expire_date=datetime.now(datetime.timezone.utc) + timedelta(minutes=1)
+                # expire_date=datetime.now(timezone.utc) + timedelta(minutes=30)
+                expire_date=datetime.now(timezone.utc) + timedelta(minutes=1)
             )
             link = invite_link.invite_link
             log.info("Пригласительная ссылка создана: %s", link)
