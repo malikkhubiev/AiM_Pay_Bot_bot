@@ -31,7 +31,9 @@ callback_handlers = {
     "get_certificate": get_certificate,
     "start_test": start_test,
     "generate_certificate_link": generate_certificate_link,
-    "download_certificate": download_certificate
+    "download_certificate": download_certificate,
+    "get_trial": get_trial,
+    "fake_buy_course": fake_buy_course,
 }
 
 # Универсальная функция-обработчик
@@ -47,8 +49,16 @@ def register_callback_handlers(dp: Dispatcher):
     
     dp.callback_query_handler()(universal_callback_handler)
     # Передаем telegram_id в обработчики через обертку
-    dp.register_message_handler(lambda message: handle_promo_input(message, message.from_user.id),
-                                lambda message: message.text.startswith("AiM"))
+    # Промокодеры не актуальны
+    # dp.register_message_handler(lambda message: handle_promo_input(message, message.from_user.id),
+    #                             lambda message: message.text.startswith("AiM"))
 
     dp.register_message_handler(lambda message: save_fio(message, message.from_user.id),
                                 lambda message: message.text.startswith("ФИО: "))
+    
+    # Регистрация хэндлера для фотографий
+    dp.register_message_handler(lambda message: handle_photo(message, message.from_user.id),
+                                content_types=types.ContentType.PHOTO)
+    
+    dp.register_message_handler(lambda message: handle_fake_payment_command(message, message.from_user.id),
+                                lambda message: message.text.startswith("Добавить: "))

@@ -41,7 +41,9 @@ def web_server():
         try:
             data = await request.json()
             tg_id = data.get("telegram_id")
-            payment_id = data.get("payment_id")
+            
+            # При официальном
+            # payment_id = data.get("payment_id")
             log.info("Начало обработки запроса...")
             
             invite_link: ChatInviteLink = await bot.create_chat_invite_link(
@@ -70,8 +72,9 @@ def web_server():
             )
 
             text_info = f"Поздравляем! Всё прошло успешно 🎉. Вот ссылка для присоединения к нашей группе. Обращайтесь с ней очень аккуратно. Она одноразовая и если вы воспользуетесь единственным шансом неверно, исправить ничего не получится: {link}."
-            if payment_id:
-                text_info += "\nДополнительно отправляем ваш идентификатор платежа: {payment_id}."    
+            # При официальном
+            # if payment_id:
+            #     text_info += "\nДополнительно отправляем ваш идентификатор платежа: {payment_id}."    
             
             await bot.send_message(
                 chat_id=tg_id,
@@ -82,12 +85,28 @@ def web_server():
         except Exception as e:
             log.error("Ошибка при создании ссылки: %s", e)
             raise web.HTTPInternalServerError(text="Ошибка на стороне Telegram API")
+    
+    async def kick_user(request):
+        try:
+            data = await request.json()
+            tg_id = data.get("telegram_id")
+            
+            log.info("Начало обработки запроса...")
+            
+            await bot.kick_chat_member(chat_id=GROUP_ID, user_id=tg_id, until_date=int(time.time()))
+            await bot.unban_chat_member(chat_id=GROUP_ID, user_id=tg_id)
+
+            return web.json_response({"status": f"{tg_id} kicked"}, status=200)
+        except Exception as e:
+            log.error("Ошибка при создании ссылки: %s", e)
+            raise web.HTTPInternalServerError(text="Ошибка на стороне Telegram API")
 
     app = web.Application()
     app.router.add_route("HEAD", "/", handle)
     app.router.add_route("GET", "/", handle)
     app.router.add_post("/notify_user", notify_user)
     app.router.add_post("/send_invite_link", send_invite_link)
+    app.router.add_post("/kick_user", kick_user)
     return app
 
 async def start_web_server():

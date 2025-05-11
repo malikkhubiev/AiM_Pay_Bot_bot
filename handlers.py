@@ -78,13 +78,23 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
         elif response["type"] == "user":
             if response["to_show"] == "pay_course":
                 keyboard.add(
-                    InlineKeyboardButton("Оплатить курс 💰", callback_data='pay_course'),
+                    # InlineKeyboardButton("Оплатить курс 💰", callback_data='pay_course'),
+                    InlineKeyboardButton("Оплатить курс 💰", callback_data='fake_buy_course'),
+                )
+            
+            if response["to_show"] == "trial":
+                keyboard.add(
+                    InlineKeyboardButton("Пробный период 24 часа 🌌", callback_data='get_trial')
                 )
 
-            if response["with_promo"] == True:
-                keyboard.add(
-                    InlineKeyboardButton("Ввести промокод 🎩", callback_data='type_promo'),
-                )
+            # Промокодеры упразднены
+            # if response["with_promo"] == True:
+            #     keyboard.add(
+            #         InlineKeyboardButton("Ввести промокод 🎩", callback_data='type_promo'),
+            #     )
+            
+
+            # Ссылка упразднена
             # else:
             #     keyboard.add(
             #         InlineKeyboardButton("Получить ссылку", callback_data='get_invite_link'),
@@ -129,13 +139,16 @@ async def getting_started(message: types.Message, telegram_id: str, u_name: str 
     if response["status"] == "success":
         keyboard = InlineKeyboardMarkup(row_width=1)
 
-        if response["with_promo"] == True:
-            keyboard.add(
-                InlineKeyboardButton("Ввести промокод 🎩", callback_data='type_promo'),
-            )
+        # Промокодеры упразднены
+        # if response["with_promo"] == True:
+        #     keyboard.add(
+        #         InlineKeyboardButton("Ввести промокод 🎩", callback_data='type_promo'),
+        #     )
 
         keyboard.add(
-            InlineKeyboardButton("Оплатить курс 💰", callback_data='pay_course'),
+            # InlineKeyboardButton("Оплатить курс 💰", callback_data='pay_course'),
+            InlineKeyboardButton("Оплатить курс 💰", callback_data='fake_buy_course'),
+            InlineKeyboardButton("Пробный период 24 часа 🌌", callback_data='get_trial'),
             InlineKeyboardButton("Получить сертфикат 🎓", callback_data='get_certificate'),
             InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'),
             # InlineKeyboardButton("Заработать, советуя друзьям 💸", callback_data='earn_new_clients')
@@ -204,7 +217,6 @@ async def course_structure(message: types.Message, telegram_id: str, u_name: str
     log.info(f"Получена команда /course_structure от {telegram_id}")
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(
-        InlineKeyboardButton("Оплатить курс 💰", callback_data='pay_course'),
         InlineKeyboardButton("Назад", callback_data='start'),
     )
 
@@ -960,25 +972,26 @@ async def type_promo(message: types.Message, telegram_id: str, u_name: str = Non
         text="Введите промокод без пробелов:"
     )
 
-async def handle_promo_input(message: types.Message, telegram_id: str, u_name: str = None):
-    promo_code = message.text.strip()
-    log.info("Введённый промокод")
-    if str(promo_code) == str(PROMO_CODE):
-        log.info("Верный промокод")
-        register_user_with_promo_url = SERVER_URL + "/register_user_with_promo"
-        telegram_id = message.from_user.id
-        user_data = {"telegram_id": telegram_id}
-        response = await send_request(
-            register_user_with_promo_url,
-            method="POST",
-            json=user_data
-        )
-        if response["status"] == "error":
-            text = response["message"]
-            await bot.send_message(
-                chat_id=message.chat.id,
-                text=text
-            )
+# Промокодеры упразднены
+# async def handle_promo_input(message: types.Message, telegram_id: str, u_name: str = None):
+#     promo_code = message.text.strip()
+#     log.info("Введённый промокод")
+#     if str(promo_code) == str(PROMO_CODE):
+#         log.info("Верный промокод")
+#         register_user_with_promo_url = SERVER_URL + "/register_user_with_promo"
+#         telegram_id = message.from_user.id
+#         user_data = {"telegram_id": telegram_id}
+#         response = await send_request(
+#             register_user_with_promo_url,
+#             method="POST",
+#             json=user_data
+#         )
+#         if response["status"] == "error":
+#             text = response["message"]
+#             await bot.send_message(
+#                 chat_id=message.chat.id,
+#                 text=text
+#             )
 
 async def generate_report(message: types.Message, telegram_id: str, u_name: str = None):
     keyboard = InlineKeyboardMarkup(row_width=1)
@@ -1216,3 +1229,93 @@ async def generate_certificate_link(message: types.Message, telegram_id: str, u_
         text=text,
         reply_markup=keyboard
     )
+
+async def get_trial(message: types.Message, telegram_id: str, u_name: str = None):
+    
+    log.info("get_trial called")
+
+    url = SERVER_URL + "/start_trial"
+    user_data = {"telegram_id": telegram_id}
+
+    response = await send_request(url, method="POST", json=user_data)
+
+    if response["status"] == "success":
+        text = "Запрос на запуск пробного периода успешно обработан.\nОжидайте получения ссылки"
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=text
+        )
+    elif response["status"] == "error":
+        text = response["message"]
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=text
+        )
+
+async def fake_buy_course(message: types.Message, telegram_id: str, u_name: str = None):
+    
+    log.info("fake_buy_course called")
+
+    get_price_url = SERVER_URL + "/get_price"
+    user_data = {"telegram_id": telegram_id}
+    response = await send_request(
+        get_price_url,
+        method="POST",
+        json=user_data
+    )
+    price = response["price"]
+
+    text = (
+    f"Для оплаты курса необходимо выполнить банковский перевод на номер карты:\n"
+    f"**2200 7702 9733 5855**\n\n"
+    f"**Сумма перевода:** {price} рублей\n\n"
+    "После завершения перевода отправьте боту скриншот, подтверждающий успешную оплату."
+    )
+    await bot.send_message(
+        chat_id=message.chat.id,
+        text=text
+    )
+
+async def handle_photo(message: Message, telegram_id: str, u_name: str = None):
+    """
+    Получает фото от пользователя и пересылает его на заданный Telegram ID.
+    """
+    log.info(f"Получена фотография от пользователя: {telegram_id}")
+
+    try:
+        # Получаем ID последней версии фото (наивысшее качество)
+        photo_id = message.photo[-1].file_id
+        caption = f"Пользователь с Telegram ID: {telegram_id} отправил фото."
+
+        # Пересылаем изображение определённому пользователю
+        await bot.send_photo(chat_id=MAIN_TELEGRAM_ID, photo=photo_id, caption=caption)
+        
+        log.info(f"Фото успешно отправлено админу с ID: {MAIN_TELEGRAM_ID}")
+    
+    except Exception as e:
+        log.error(f"Ошибка при отправке фото админу: {e}")
+
+
+async def handle_fake_payment_command(message: types.Message, telegram_id: str):
+    """
+    Обработчик команды добавления пользователя в группу.
+    """
+    log.info(f"handle_fake_payment_command called by {telegram_id}")
+
+    # Проверяем, что это именно админ отправил команду
+    if telegram_id == MAIN_TELEGRAM_ID:
+        new_user_id = message.text.split("Добавить: ")[1].strip()
+        
+        fake_payment_url = SERVER_URL + "/fake_payment"
+        user_data = {"telegram_id": new_user_id}
+        response = await send_request(
+            fake_payment_url,
+            method="POST",
+            json=user_data
+        )
+        if response["status"] == "error":
+            text = response["message"]
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text=text
+            )
