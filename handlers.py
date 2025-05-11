@@ -1239,13 +1239,7 @@ async def get_trial(message: types.Message, telegram_id: str, u_name: str = None
 
     response = await send_request(url, method="POST", json=user_data)
 
-    if response["status"] == "success":
-        text = "Запрос на запуск пробного периода успешно обработан.\nОжидайте получения ссылки"
-        await bot.send_message(
-            chat_id=message.chat.id,
-            text=text
-        )
-    elif response["status"] == "error":
+    if response["status"] == "error":
         text = response["message"]
         await bot.send_message(
             chat_id=message.chat.id,
@@ -1269,7 +1263,9 @@ async def fake_buy_course(message: types.Message, telegram_id: str, u_name: str 
     f"Для оплаты курса необходимо выполнить банковский перевод на номер карты:\n"
     f"**2200 7702 9733 5855**\n\n"
     f"**Сумма перевода:** {price} рублей\n\n"
+    "*Будьте очень внимательны, так как возврат денежных средств не предусмотрен.\n\n"
     "После завершения перевода отправьте боту скриншот, подтверждающий успешную оплату."
+    "При успешной оплате, вы получите пригласительную ссылку в группу в течение 24 часов."
     )
     await bot.send_message(
         chat_id=message.chat.id,
