@@ -5,7 +5,6 @@ from loader import *
 from utils import *
 from web_server import start_web_server
 from button_handlers import register_callback_handlers
-from handlers import BlacklistMiddleware
 
 from config import (
     SERVER_URL
