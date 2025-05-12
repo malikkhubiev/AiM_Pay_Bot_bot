@@ -1336,11 +1336,17 @@ BLACKLIST = set()
 
 class BlacklistMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data):
+        log.info(f"BlacklistMiddleware called")
+        
         # Получаем user_id из любого типа события
         user_id = getattr(getattr(event, 'from_user', None), 'id', None)
-        
+        log.info(f"user_id {user_id}")
+
         # Проверяем блокировку
-        if user_id and str(user_id) in BLACKLIST:
+        if str(user_id) in BLACKLIST:
+
+            log.info(f"{user_id} in blacklist")
+            
             if isinstance(event, Message):
                 await event.answer("🚫 Вы в чёрном списке!")
             elif isinstance(event, CallbackQuery):
