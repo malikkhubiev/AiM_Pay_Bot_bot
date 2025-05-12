@@ -1,7 +1,8 @@
 
 from aiogram import Bot, Dispatcher
 from aiogram.utils import executor
-from aiogram.types import ParseMode, ChatInviteLink, Message, InlineKeyboardMarkup, InlineKeyboardButton, ChatMemberUpdated
+from aiogram.dispatcher.handler import CancelHandler
+from aiogram.types import ParseMode, ChatInviteLink, Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, ChatMemberUpdated
 from aiogram import types
 from aiogram.types import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton, InputFile
 from config import (

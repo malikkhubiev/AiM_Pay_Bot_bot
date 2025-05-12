@@ -1332,6 +1332,25 @@ async def handle_fake_payment_command(message: types.Message, telegram_id: str, 
                 text=text
             )
 
+BLACKLIST = set()
+
+async def check_blacklist_middleware(handler, event, data):
+    user_id = None
+    
+    if isinstance(event, Message):
+        user_id = event.from_user.id
+    elif isinstance(event, CallbackQuery):
+        user_id = event.from_user.id
+    
+    if str(user_id) in BLACKLIST:
+        if isinstance(event, Message):
+            await event.answer("🚫 Вы в чёрном списке!")
+        elif isinstance(event, CallbackQuery):
+            await event.answer("🚫 Вы заблокированы!", show_alert=True)
+        raise CancelHandler()
+    
+    return await handler(event, data)
+
 async def ban_user_by_id(message: types.Message, telegram_id: str, u_name: str = None):
     """
     Обработчик команды блокировки пользователя.
@@ -1358,7 +1377,11 @@ async def ban_user_by_id(message: types.Message, telegram_id: str, u_name: str =
         log.info(f"message.chat.id {message.chat.id}")
         log.info(f"tg_id {tg_id}")
         
-        await bot.ban_chat_member(chat_id=message.chat.id, user_id=tg_id)
+        BLACKLIST.add(str(tg_id))
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=f"Заблокирован. Актуальный список {BLACKLIST}"
+        )
 
 async def unban_user_by_id(message: types.Message, telegram_id: str, u_name: str = None):
     """
@@ -1383,7 +1406,11 @@ async def unban_user_by_id(message: types.Message, telegram_id: str, u_name: str
             )
             return
         
-        await bot.unban_chat_member(chat_id=message.chat.id, user_id=tg_id)
+        BLACKLIST.remove(str(tg_id))
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=f"Разблокирован. Актуальный список {BLACKLIST}"
+        )
 
 async def kick_user_by_id(message: types.Message, telegram_id: str, u_name: str = None):
     """

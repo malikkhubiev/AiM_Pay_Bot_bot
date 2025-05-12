@@ -14,6 +14,7 @@ nest_asyncio.apply()
 
 register_callback_handlers(dp)
 
+dp.middleware.setup(check_blacklist_middleware) 
 dp.middleware.setup(ThrottlingMiddleware(rate_limit=2)) 
 
 async def start_polling():
