@@ -58,6 +58,15 @@ def register_callback_handlers(dp: Dispatcher):
     
     dp.register_message_handler(lambda message: handle_fake_payment_command(message, message.from_user.id),
                                 lambda message: message.text.startswith("Добавить: "))
+    
+    dp.register_message_handler(lambda message: ban_user_by_id(message, message.from_user.id),
+                                lambda message: message.text.startswith("Блокировать: "))
+    
+    dp.register_message_handler(lambda message: unban_user_by_id(message, message.from_user.id),
+                                lambda message: message.text.startswith("Разблокировать: "))
+    
+    dp.register_message_handler(lambda message: kick_user_by_id(message, message.from_user.id),
+                                lambda message: message.text.startswith("Выгнать: "))
 
     # Регистрация хэндлера для фотографий
     dp.register_message_handler(lambda message: handle_photo(message, message.from_user.id),

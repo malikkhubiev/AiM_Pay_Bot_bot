@@ -11,7 +11,7 @@ from config import (
     EARN_NEW_CLIENTS_VIDEO_URL,
     TAX_INFO_IMG_URL,
     MAIN_TELEGRAM_ID,
-    PROMO_CODE
+    GROUP_ID,
 )
 import aiohttp
 import asyncio
@@ -1313,7 +1313,7 @@ async def handle_fake_payment_command(message: types.Message, telegram_id: str, 
         if not new_user_id.strip():
             await bot.send_message(
                 chat_id=message.chat.id,
-                text="ФИО не может быть пустым"
+                text="TG id не может быть пустым"
             )
             return
         
@@ -1330,3 +1330,79 @@ async def handle_fake_payment_command(message: types.Message, telegram_id: str, 
                 chat_id=message.chat.id,
                 text=text
             )
+
+async def ban_user_by_id(message: types.Message, telegram_id: str, u_name: str = None):
+    """
+    Обработчик команды блокировки пользователя.
+    """
+    log.info(f"ban_user_by_id called by {MAIN_TELEGRAM_ID} = {telegram_id}")
+
+    # Проверяем, что это именно админ отправил команду
+    if str(telegram_id) == str(MAIN_TELEGRAM_ID):
+        log.info(f"main tg id")
+        
+        id_input = message.text.strip()
+        log.info(f"id_input {id_input}")
+
+        tg_id = id_input.replace("Блокировать: ", "").strip()
+        log.info(f"tg_id {tg_id}")
+
+        if not tg_id.strip():
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text="TG id не может быть пустым"
+            )
+            return
+        
+        await bot.ban_chat_member(bot, chat_id=message.chat.id, user_id=tg_id)
+
+async def unban_user_by_id(message: types.Message, telegram_id: str, u_name: str = None):
+    """
+    Обработчик команды разблокировки пользователя.
+    """
+    log.info(f"unban_user_by_id called by {MAIN_TELEGRAM_ID} = {telegram_id}")
+
+    # Проверяем, что это именно админ отправил команду
+    if str(telegram_id) == str(MAIN_TELEGRAM_ID):
+        log.info(f"main tg id")
+        
+        id_input = message.text.strip()
+        log.info(f"id_input {id_input}")
+
+        tg_id = id_input.replace("Разблокировать: ", "").strip()
+        log.info(f"tg_id {tg_id}")
+
+        if not tg_id.strip():
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text="TG id не может быть пустым"
+            )
+            return
+        
+        await bot.unban_chat_member(bot, chat_id=message.chat.id, user_id=tg_id)
+
+async def kick_user_by_id(message: types.Message, telegram_id: str, u_name: str = None):
+    """
+    Обработчик команды исключения пользователя из группы.
+    """
+    log.info(f"kick_user_by_id called by {MAIN_TELEGRAM_ID} = {telegram_id}")
+
+    # Проверяем, что это именно админ отправил команду
+    if str(telegram_id) == str(MAIN_TELEGRAM_ID):
+        log.info(f"main tg id")
+        
+        id_input = message.text.strip()
+        log.info(f"id_input {id_input}")
+
+        tg_id = id_input.replace("Выгнать: ", "").strip()
+        log.info(f"tg_id {tg_id}")
+
+        if not tg_id.strip():
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text="TG id не может быть пустым"
+            )
+            return
+        
+        await bot.kick_chat_member(chat_id=GROUP_ID, user_id=tg_id)
+        await bot.unban_chat_member(chat_id=GROUP_ID, user_id=tg_id)
