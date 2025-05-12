@@ -4,7 +4,7 @@ import nest_asyncio
 from loader import *
 from utils import *
 from web_server import start_web_server
-from button_handlers import register_callback_handlers
+from button_handlers import register_callback_handlers, check_blacklist_middleware
 
 from config import (
     SERVER_URL
