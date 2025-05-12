@@ -1426,3 +1426,9 @@ async def kick_user_by_id(message: types.Message, telegram_id: str, u_name: str 
         
         await bot.kick_chat_member(chat_id=GROUP_ID, user_id=tg_id)
         await bot.unban_chat_member(chat_id=GROUP_ID, user_id=tg_id)
+        text = "Выгнал"
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=text
+        )
+            
