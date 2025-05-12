@@ -1334,22 +1334,21 @@ async def handle_fake_payment_command(message: types.Message, telegram_id: str, 
 
 BLACKLIST = set()
 
-async def check_blacklist_middleware(handler, event, data):
-    user_id = None
-    
-    if isinstance(event, Message):
-        user_id = event.from_user.id
-    elif isinstance(event, CallbackQuery):
-        user_id = event.from_user.id
-    
-    if str(user_id) in BLACKLIST:
-        if isinstance(event, Message):
-            await event.answer("🚫 Вы в чёрном списке!")
-        elif isinstance(event, CallbackQuery):
-            await event.answer("🚫 Вы заблокированы!", show_alert=True)
-        raise CancelHandler()
-    
-    return await handler(event, data)
+class BlacklistMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event, data):
+        # Получаем user_id из любого типа события
+        user_id = getattr(getattr(event, 'from_user', None), 'id', None)
+        
+        # Проверяем блокировку
+        if user_id and str(user_id) in BLACKLIST:
+            if isinstance(event, Message):
+                await event.answer("🚫 Вы в чёрном списке!")
+            elif isinstance(event, CallbackQuery):
+                await event.answer("🚫 Вы заблокированы!", show_alert=True)
+            raise CancelHandler()
+        
+        # Пропускаем обработку, если пользователь не в чёрном списке
+        return await handler(event, data)
 
 async def ban_user_by_id(message: types.Message, telegram_id: str, u_name: str = None):
     """
