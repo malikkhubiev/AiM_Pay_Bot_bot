@@ -13,10 +13,10 @@ from config import (
 
 nest_asyncio.apply()
 
-register_callback_handlers(dp)
-
 dp.middleware.setup(BlacklistMiddleware()) 
 dp.middleware.setup(ThrottlingMiddleware(rate_limit=2)) 
+
+register_callback_handlers(dp)
 
 async def start_polling():
     await dp.start_polling()
