@@ -1354,6 +1354,9 @@ async def ban_user_by_id(message: types.Message, telegram_id: str, u_name: str =
                 text="TG id не может быть пустым"
             )
             return
+
+        log.info(f"message.chat.id {message.chat.id}")
+        log.info(f"tg_id {tg_id}")
         
         await bot.ban_chat_member(chat_id=message.chat.id, user_id=tg_id)
 
