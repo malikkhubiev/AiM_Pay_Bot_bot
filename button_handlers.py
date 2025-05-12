@@ -38,6 +38,11 @@ callback_handlers = {
 
 # Универсальная функция-обработчик
 async def universal_callback_handler(callback_query: types.CallbackQuery):
+    user_id = str(callback_query.from_user.id)
+    
+    if user_id in BLACKLIST:
+        raise CancelHandler()
+
     await callback_query.bot.answer_callback_query(callback_query.id)
     handler_func = callback_handlers.get(callback_query.data)
     if handler_func:

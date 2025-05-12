@@ -13,7 +13,6 @@ from config import (
 
 nest_asyncio.apply()
 
-dp.middleware.setup(BlacklistMiddleware()) 
 dp.middleware.setup(ThrottlingMiddleware(rate_limit=2)) 
 
 register_callback_handlers(dp)
