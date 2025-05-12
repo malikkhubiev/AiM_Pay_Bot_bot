@@ -1250,7 +1250,7 @@ async def fake_buy_course(message: types.Message, telegram_id: str, u_name: str 
     
     log.info("fake_buy_course called")
 
-    get_price_url = SERVER_URL + "/get_price"
+    get_price_url = SERVER_URL + "/get_payment_data"
     user_data = {"telegram_id": telegram_id}
     response = await send_request(
         get_price_url,
@@ -1258,10 +1258,11 @@ async def fake_buy_course(message: types.Message, telegram_id: str, u_name: str 
         json=user_data
     )
     price = response["price"]
+    card_number = response["card_number"]
 
     text = (
     f"Для оплаты курса необходимо выполнить банковский перевод на номер карты:\n"
-    f"**2200 7702 9733 5855**\n\n"
+    f"**{card_number}**\n\n"
     f"**Сумма перевода:** {price} рублей\n\n"
     "*Будьте очень внимательны, так как возврат денежных средств не предусмотрен.\n\n"
     "После завершения перевода отправьте боту скриншот, подтверждающий успешную оплату.\n"
