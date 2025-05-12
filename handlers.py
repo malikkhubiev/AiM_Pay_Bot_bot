@@ -1325,7 +1325,13 @@ async def handle_fake_payment_command(message: types.Message, telegram_id: str, 
             method="POST",
             json=user_data
         )
-        if response["status"] == "error":
+        if response["status"] == "success":
+            text = "Добавлен"
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text=text
+            )
+        elif response["status"] == "error":
             text = response["message"]
             await bot.send_message(
                 chat_id=message.chat.id,
