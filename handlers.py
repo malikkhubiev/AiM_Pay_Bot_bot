@@ -1355,7 +1355,7 @@ async def ban_user_by_id(message: types.Message, telegram_id: str, u_name: str =
             )
             return
         
-        await bot.ban_chat_member(bot, chat_id=message.chat.id, user_id=tg_id)
+        await bot.ban_chat_member(chat_id=message.chat.id, user_id=tg_id)
 
 async def unban_user_by_id(message: types.Message, telegram_id: str, u_name: str = None):
     """
@@ -1380,7 +1380,7 @@ async def unban_user_by_id(message: types.Message, telegram_id: str, u_name: str
             )
             return
         
-        await bot.unban_chat_member(bot, chat_id=message.chat.id, user_id=tg_id)
+        await bot.unban_chat_member(chat_id=message.chat.id, user_id=tg_id)
 
 async def kick_user_by_id(message: types.Message, telegram_id: str, u_name: str = None):
     """
