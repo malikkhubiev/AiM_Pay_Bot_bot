@@ -39,6 +39,11 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
     if not(username):
         username = message.from_user.username or message.from_user.first_name
     
+    await bot.send_message(
+        chat_id=str(MAIN_TELEGRAM_ID),
+        text=f"Пользователь telegram_id={telegram_id} username={username} нажал кнопку /start"
+    )
+
     referrer_id = message.text.split(' ')[1] if len(message.text.split(' ')) > 1 else None
 
     if referrer_id and not(referrer_id.isdigit()):
@@ -123,6 +128,11 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
 async def getting_started(message: types.Message, telegram_id: str, u_name: str = None):
     log.info(f"Получена команда /getting_started от {telegram_id}")
 
+    await bot.send_message(
+        chat_id=str(MAIN_TELEGRAM_ID),
+        text=f"Пользователь telegram_id={telegram_id} username={u_name} нажал кнопку /getting started"
+    )
+
     getting_started_url = SERVER_URL + "/getting_started"
     user_data = {
         "telegram_id": telegram_id
@@ -178,6 +188,12 @@ async def get_documents(message: types.Message, telegram_id: str, u_name: str = 
 
 async def more_about_course(message: types.Message, telegram_id: str, u_name: str = None):
     log.info(f"Получена команда /more_about_course от {telegram_id}")
+
+    await bot.send_message(
+        chat_id=str(MAIN_TELEGRAM_ID),
+        text=f"Пользователь telegram_id={telegram_id} username={u_name} нажал кнопку /more_about_course"
+    )
+
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(
         InlineKeyboardButton("Структура курса", callback_data='course_structure'),
@@ -215,6 +231,12 @@ async def more_about_course(message: types.Message, telegram_id: str, u_name: st
 
 async def course_structure(message: types.Message, telegram_id: str, u_name: str = None):
     log.info(f"Получена команда /course_structure от {telegram_id}")
+
+    await bot.send_message(
+        chat_id=str(MAIN_TELEGRAM_ID),
+        text=f"Пользователь telegram_id={telegram_id} username={u_name} нажал кнопку /course_structure"
+    )
+
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(
         InlineKeyboardButton("Назад", callback_data='start'),
@@ -1038,6 +1060,11 @@ async def get_certificate(message: types.Message, telegram_id: str, u_name: str 
     log.info("get_certificate called")
 
     await bot.send_message(
+        chat_id=str(MAIN_TELEGRAM_ID),
+        text=f"Пользователь telegram_id={telegram_id} username={u_name} нажал кнопку /get_certificate"
+    )
+
+    await bot.send_message(
         chat_id=message.chat.id,
         text="Получаем информацию о сертификации..."
     )
@@ -1233,6 +1260,10 @@ async def generate_certificate_link(message: types.Message, telegram_id: str, u_
 async def get_trial(message: types.Message, telegram_id: str, u_name: str = None):
     
     log.info("get_trial called")
+    await bot.send_message(
+        chat_id=str(MAIN_TELEGRAM_ID),
+        text=f"Пользователь telegram_id={telegram_id} username={u_name} нажал кнопку /get_trial"
+    )
 
     url = SERVER_URL + "/start_trial"
     user_data = {"telegram_id": telegram_id}
@@ -1249,6 +1280,11 @@ async def get_trial(message: types.Message, telegram_id: str, u_name: str = None
 async def fake_buy_course(message: types.Message, telegram_id: str, u_name: str = None):
     
     log.info("fake_buy_course called")
+
+    await bot.send_message(
+        chat_id=str(MAIN_TELEGRAM_ID),
+        text=f"Пользователь telegram_id={telegram_id} username={u_name} нажал кнопку /fake_buy_course"
+    )
 
     get_price_url = SERVER_URL + "/get_payment_data"
     user_data = {"telegram_id": telegram_id}
