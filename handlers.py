@@ -16,9 +16,10 @@ from config import (
 )
 import aiohttp
 import asyncio
-from analytics import send_event_to_ga4
+from analytics import send_event_to_ga4, send_event_to_google_form
 from utils import *
 from loader import *
+import datetime
 
 # Кэш для хранения ссылок
 links_cache = {}
@@ -40,6 +41,20 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
     if not(username):
         username = message.from_user.username or message.from_user.first_name
     
+    # --- Логирование входа пользователя в Google Форму ---
+    session_start = datetime.datetime.now().isoformat()
+    session_id = f"{telegram_id}_{session_start}"
+    await send_event_to_google_form({
+        "telegram_id": telegram_id,
+        "username": username,
+        "event_type": "start",
+        "button_name": None,
+        "session_id": session_id,
+        "session_start": session_start,
+        "session_end": None,
+        "session_duration": None,
+    })
+
     if telegram_id != str(MAIN_TELEGRAM_ID):
         await bot.send_message(
             chat_id=str(MAIN_TELEGRAM_ID),

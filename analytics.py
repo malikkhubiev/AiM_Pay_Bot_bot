@@ -1,7 +1,9 @@
 import httpx
 from config import (
     GOOGLE_ANALYTICS_STEAM_ID,
-    GOOGLE_ANALYTICS_API_SECRET_KEY
+    GOOGLE_ANALYTICS_API_SECRET_KEY,
+    GOOGLE_FORM_URL,
+    GOOGLE_FORM_FIELDS
 )
 from utils import *
 
@@ -44,3 +46,17 @@ def send_event_to_ga4(telegram_id, event_category, event_action, event_label=Non
         else:
             log.info(f"error with sending")
             print(f"Ошибка при отправке события: {response.status_code}, {response.text}")
+
+async def send_event_to_google_form(data: dict):
+    payload = {
+        GOOGLE_FORM_FIELDS["telegram_id"]: data.get("telegram_id"),
+        GOOGLE_FORM_FIELDS["username"]: data.get("username"),
+        GOOGLE_FORM_FIELDS["event_type"]: data.get("event_type"),
+        GOOGLE_FORM_FIELDS["button_name"]: data.get("button_name"),
+        GOOGLE_FORM_FIELDS["session_id"]: data.get("session_id"),
+        GOOGLE_FORM_FIELDS["session_start"]: data.get("session_start"),
+        GOOGLE_FORM_FIELDS["session_end"]: data.get("session_end"),
+        GOOGLE_FORM_FIELDS["session_duration"]: data.get("session_duration"),
+    }
+    async with httpx.AsyncClient() as client:
+        await client.post(GOOGLE_FORM_URL, data=payload)
