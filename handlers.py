@@ -1345,11 +1345,13 @@ async def handle_photo(message: Message, telegram_id: str, u_name: str = None):
     try:
         # Получаем ID последней версии фото (наивысшее качество)
         photo_id = message.photo[-1].file_id
-        caption = f"{telegram_id}"
-
         # Пересылаем изображение определённому пользователю
-        await bot.send_photo(chat_id=MAIN_TELEGRAM_ID, photo=photo_id, caption=caption)
-        
+        await bot.send_photo(chat_id=MAIN_TELEGRAM_ID, photo=photo_id)
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=f"Добавить: {telegram_id}"
+        )
+
         log.info(f"Фото успешно отправлено админу с ID: {MAIN_TELEGRAM_ID}")
     
     except Exception as e:
