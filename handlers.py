@@ -82,7 +82,7 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
             log.info(f"send_message")
             await bot.send_message(
                 chat_id=message.chat.id,
-                text='Добро пожаловать! <br> Перед покупкой курса «ML и Data Science для руководителей» рекомендуем ознакомиться с сайтом курса. <br> После нажатия кнопки «Начало работы», вы будете добавлены в нашу базу данных и сможете оплатить курс.',
+                text='Добро пожаловать! \n Перед покупкой курса «ML и Data Science для руководителей» рекомендуем ознакомиться с сайтом курса. \n После нажатия кнопки «Начало работы», вы будете добавлены в нашу базу данных и сможете оплатить курс.',
                 parse_mode=ParseMode.HTML,
                 reply_markup=keyboard
             )
