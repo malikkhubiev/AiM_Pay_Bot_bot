@@ -5,6 +5,7 @@ from config import (
     COURSE_AMOUNT,
     REFERRAL_AMOUNT,
     SERVER_URL,
+    LANDING_URL,
     START_VIDEO_URL,
     REPORT_VIDEO_URL,
     REFERRAL_VIDEO_URL,
@@ -73,7 +74,8 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
             log.info(f"temp")
             keyboard.add(
                 InlineKeyboardButton("Начало работы 🏔️", callback_data='getting_started'),
-                InlineKeyboardButton("Документы 📚", callback_data='documents'),
+                # InlineKeyboardButton("Документы 📚", callback_data='documents'),
+                InlineKeyboardButton("Сайт 📚", url=f"{str(LANDING_URL)}"),
             )
             log.info(f"send_message")
             await bot.send_message(
