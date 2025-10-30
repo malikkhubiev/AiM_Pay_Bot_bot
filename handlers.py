@@ -1324,8 +1324,8 @@ async def fake_buy_course(message: types.Message, telegram_id: str, u_name: str 
     card_number = response["card_number"]
 
     text = (
-    f"Стоимость курса по машинному обучению = {price} рублей"
-    "При успешной оплате, вы получите пригласительную ссылку в группу на указанную почту"
+    f"Стоимость курса по машинному обучению = {price} рублей\n\n"
+    "При успешной оплате, на указанную почту вы получите пригласительную ссылку"
     )
     await bot.send_message(
         chat_id=message.chat.id,
