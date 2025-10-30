@@ -5,6 +5,8 @@ load_dotenv()
 
 USE_RENDER = os.getenv("USE_RENDER")
 
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+
 API_TOKEN = os.getenv("API_TOKEN")
 SERVER_URL = os.getenv("SERVER_URL")
 LANDING_URL = os.getenv("LANDING_URL")

@@ -20,9 +20,15 @@ from analytics import send_event_to_ga4, send_event_to_google_form
 from utils import *
 from loader import *
 import datetime
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+import re
 
 # Кэш для хранения ссылок
 links_cache = {}
+
+# In-memory временное хранилище email-flow для каждого пользователя (telegram_id)
+user_payment_email_flow = {}
+# Структура: {telegram_id: {"email": str, "status": "waiting_confirm"/"confirmed"}}
 
 # Функция для инициализации словаря кэша, если его ещё нет
 def init_user_cache(telegram_id: str):
@@ -1496,3 +1502,130 @@ async def kick_user_by_id(message: types.Message, telegram_id: str, u_name: str 
             text=text
         )
             
+
+@dp.callback_query_handler(lambda c: c.data == 'fake_buy_course')
+async def callback_fake_buy_course(call: types.CallbackQuery):
+    telegram_id = str(call.from_user.id)
+    # Проверим, есть ли подтвержденный email (запрошен и подтвержден ранее)
+    response = await send_request(
+        SERVER_URL + "/get_pay_email",
+        method="POST",
+        json={"telegram_id": telegram_id}
+    )
+    pay_email = response.get('email')
+    if not pay_email:
+        # Если email не сохранён, просим ввести email
+        user_payment_email_flow[telegram_id] = {"status": "waiting_email"}
+        await call.message.answer(
+            "Напишите email, куда мы отправим одноразовую пригласительную ссылку на материалы курса. Будьте внимательны"
+        )
+        # Сбрасываем инлайн-клаву
+        await call.answer()
+        return
+    # Если email уже есть, показываем данные + кнопки Оплатить/Изменить почту
+    await show_payment_prompt(call.message, telegram_id, pay_email)
+    await call.answer()
+
+# Обработка текстовых сообщений (введённый email):
+@dp.message_handler(lambda message: user_payment_email_flow.get(str(message.from_user.id), {}).get('status') == 'waiting_email')
+async def handle_email_input(message: types.Message):
+    telegram_id = str(message.from_user.id)
+    email = message.text.strip()
+    if not is_valid_email_local(email):
+        await message.answer("Пожалуйста, введите корректный email (пример: name@domain.com)")
+        return
+    existing = user_payment_email_flow.get(telegram_id, {}).get("email")
+    if existing == email:
+        await message.answer("Этот email уже был введён. Введите другой или нажмите 'Изменить'.")
+        return
+    # Валидация сервером
+    server_resp = await send_request(
+        SERVER_URL + "/set_pay_email",
+        method="POST",
+        json={"telegram_id": telegram_id, "email": email}
+    )
+    if server_resp.get("status") != "success":
+        await message.answer(f"Ошибка: {server_resp.get('message', 'Не удалось сохранить email')}")
+        return
+    user_payment_email_flow[telegram_id] = {"status": "waiting_confirm", "email": email}
+    keyboard = InlineKeyboardMarkup(row_width=1).add(
+        InlineKeyboardButton("Подтвердить", callback_data='confirm_pay_email'),
+        InlineKeyboardButton("Изменить", callback_data='change_pay_email'),
+    )
+    await message.answer(
+        f"Вы указали email: {email}\nПроверьте, правильно ли написан email.\nТеперь выберите действие:",
+        reply_markup=keyboard
+    )
+
+@dp.callback_query_handler(lambda c: c.data == 'confirm_pay_email')
+async def confirm_pay_email(call: types.CallbackQuery):
+    telegram_id = str(call.from_user.id)
+    email_data = user_payment_email_flow.get(telegram_id)
+    if not email_data or 'email' not in email_data:
+        await call.message.answer("Email не найден. Попробуйте ещё раз.")
+        await call.answer()
+        return
+    email = email_data['email']
+    # Сохраняем email на сервере
+    await send_request(
+        SERVER_URL + "/set_pay_email",
+        method="POST",
+        json={"telegram_id": telegram_id, "email": email}
+    )
+    user_payment_email_flow[telegram_id] = {"status": "confirmed", "email": email}
+    await show_payment_prompt(call.message, telegram_id, email)
+    await call.answer()
+
+@dp.callback_query_handler(lambda c: c.data == 'change_pay_email')
+async def change_pay_email(call: types.CallbackQuery):
+    telegram_id = str(call.from_user.id)
+    user_payment_email_flow[telegram_id] = {"status": "waiting_email"}
+    await call.message.answer("Введите email ещё раз:")
+    await call.answer()
+
+async def show_payment_prompt(message, telegram_id, email):
+    # Получить актуальные данные о цене, карте и прочем
+    get_price_url = SERVER_URL + "/get_payment_data"
+    response = await send_request(
+        get_price_url,
+        method="POST",
+        json={"telegram_id": telegram_id}
+    )
+    price = response.get("price", "-")
+    card_number = response.get("card_number", "-")
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(InlineKeyboardButton("Заплатить", callback_data="actually_pay_for_course"))
+    keyboard.add(InlineKeyboardButton("Изменить почту", callback_data="change_pay_email"))
+    text = (
+        f"💳 Стоимость курса по машинному обучению = {price} рублей\n\n"
+        f"💌 Ваша электронная почта: {email}\n"
+        f"💳 Карта для оплаты: {card_number}\n"
+        f"✅ При успешной оплате, на указанную почту вы получите пригласительную ссылку"
+    )
+    await message.answer(text, reply_markup=keyboard)
+
+@dp.callback_query_handler(lambda c: c.data == 'actually_pay_for_course')
+async def actually_pay_for_course(call: types.CallbackQuery):
+    telegram_id = str(call.from_user.id)
+    email_response = await send_request(SERVER_URL + "/get_pay_email", method="POST", json={"telegram_id": telegram_id})
+    pay_email = email_response.get('email')
+    # Тут выполнить старый flow fake_buy_course, но с правильным email
+    get_price_url = SERVER_URL + "/get_payment_data"
+    response = await send_request(
+        get_price_url,
+        method="POST",
+        json={"telegram_id": telegram_id}
+    )
+    price = response.get("price", "-")
+    card_number = response.get("card_number", "-")
+    text = (
+        f"💳 Стоимость курса по машинному обучению = {price} рублей\n\n"
+        f"💌 Ваша электронная почта: {pay_email}\n"
+        f"💳 Карта для оплаты: {card_number}\n"
+        f"✅ При успешной оплате, на указанную почту вы получите пригласительную ссылку"
+    )
+    await call.message.answer(text)
+    await call.answer()
+
+def is_valid_email_local(email):
+    return re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", email) is not None
