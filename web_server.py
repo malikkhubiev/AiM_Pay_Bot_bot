@@ -84,7 +84,8 @@ def web_server():
                 text=text_info,
                 reply_markup=keyboard
             )
-            return web.json_response({"status": "notification sent"}, status=200)
+            # Возвращаем ссылку для отправки на email
+            return web.json_response({"status": "notification sent", "invite_link": link}, status=200)
         except Exception as e:
             log.error("Ошибка при создании ссылки: %s", e)
             raise web.HTTPInternalServerError(text="Ошибка на стороне Telegram API")

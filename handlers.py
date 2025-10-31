@@ -108,6 +108,8 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
                 reply_markup=keyboard
             )
         elif response["type"] == "user":
+            log.info("type = user")
+            log.info(f"response['to_show'] = {response['to_show']}")
             if response["to_show"] == "pay_course":
                 keyboard.add(
                     # InlineKeyboardButton("Оплатить курс 💰", callback_data='pay_course'),
@@ -376,7 +378,7 @@ async def handle_pay_command(message: types.Message, telegram_id: str, u_name: s
         response = await send_request(
             create_payment_url,
             method="POST",
-            json=user_data
+            json=payment_data
         )
 
         if response["status"] == "success":
@@ -1327,13 +1329,12 @@ async def fake_buy_course(message: types.Message, telegram_id: str, u_name: str 
         json=user_data
     )
     price = response["price"]
-    # email = response["email"]
+    email = response["email"]
     card_number = response["card_number"]
 
     text = (
     f"💳 Стоимость курса по машинному обучению = {price} рублей\n\n"
-    "💌 Ваша электронная почта: 01_AiM_01@mail.ru\n"
-    # "💌 Ваша электронная почта: {email}\n"
+    "💌 Ваша электронная почта: {email}\n"
     "✅ При успешной оплате, на указанную почту вы получите пригласительную ссылку"
     )
     await bot.send_message(
@@ -1592,39 +1593,24 @@ async def show_payment_prompt(message, telegram_id, email):
         json={"telegram_id": telegram_id}
     )
     price = response.get("price", "-")
-    card_number = response.get("card_number", "-")
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(InlineKeyboardButton("Заплатить", callback_data="actually_pay_for_course"))
     keyboard.add(InlineKeyboardButton("Изменить почту", callback_data="change_pay_email"))
     text = (
         f"💳 Стоимость курса по машинному обучению = {price} рублей\n\n"
         f"💌 Ваша электронная почта: {email}\n"
-        f"💳 Карта для оплаты: {card_number}\n"
         f"✅ При успешной оплате, на указанную почту вы получите пригласительную ссылку"
     )
     await message.answer(text, reply_markup=keyboard)
 
 @dp.callback_query_handler(lambda c: c.data == 'actually_pay_for_course')
 async def actually_pay_for_course(call: types.CallbackQuery):
+    log.info(f"actually_pay_for_course called")
     telegram_id = str(call.from_user.id)
-    email_response = await send_request(SERVER_URL + "/get_pay_email", method="POST", json={"telegram_id": telegram_id})
-    pay_email = email_response.get('email')
-    # Тут выполнить старый flow fake_buy_course, но с правильным email
-    get_price_url = SERVER_URL + "/get_payment_data"
-    response = await send_request(
-        get_price_url,
-        method="POST",
-        json={"telegram_id": telegram_id}
-    )
-    price = response.get("price", "-")
-    card_number = response.get("card_number", "-")
-    text = (
-        f"💳 Стоимость курса по машинному обучению = {price} рублей\n\n"
-        f"💌 Ваша электронная почта: {pay_email}\n"
-        f"💳 Карта для оплаты: {card_number}\n"
-        f"✅ При успешной оплате, на указанную почту вы получите пригласительную ссылку"
-    )
-    await call.message.answer(text)
+    username = call.from_user.username or call.from_user.first_name
+    log.info(f"telegram_id {telegram_id}, username {username}")
+    # Вызываем handle_pay_command для выполнения полного flow оплаты
+    await handle_pay_command(call.message, telegram_id, username)
     await call.answer()
 
 def is_valid_email_local(email):
