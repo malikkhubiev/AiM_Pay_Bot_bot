@@ -1567,11 +1567,11 @@ async def confirm_pay_email(call: types.CallbackQuery):
         await call.answer()
         return
     email = email_data['email']
-    # Сохраняем email на сервере
+    # Сохраняем email на сервере с подтверждением
     await send_request(
         SERVER_URL + "/set_pay_email",
         method="POST",
-        json={"telegram_id": telegram_id, "email": email}
+        json={"telegram_id": telegram_id, "email": email, "action_type": "confirmed"}
     )
     user_payment_email_flow[telegram_id] = {"status": "confirmed", "email": email}
     await show_payment_prompt(call.message, telegram_id, email)
