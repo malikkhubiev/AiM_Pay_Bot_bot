@@ -33,6 +33,7 @@ def web_server():
             await bot.send_message(
                 chat_id=tg_id,
                 text=message_text,
+                parse_mode="HTML",
                 reply_markup=keyboard
             )
             return web.json_response({"status": "notification sent"}, status=200)

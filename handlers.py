@@ -143,7 +143,7 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
             keyboard.add(
                 InlineKeyboardButton("Получить сертфикат 🎓", callback_data='get_certificate'),
                 InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'),
-                # InlineKeyboardButton("Заработать на новых клиентах 💸", callback_data='earn_new_clients')
+                InlineKeyboardButton("Заработать на новых клиентах 💸", callback_data='earn_new_clients')
             )
             await bot.send_video(
                 chat_id=message.chat.id,
@@ -191,7 +191,7 @@ async def getting_started(message: types.Message, telegram_id: str, u_name: str 
             # InlineKeyboardButton("Пробный период 24 часа 🌌", callback_data='get_trial'),
             InlineKeyboardButton("Получить сертфикат 🎓", callback_data='get_certificate'),
             InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'),
-            # InlineKeyboardButton("Заработать, советуя друзьям 💸", callback_data='earn_new_clients')
+            InlineKeyboardButton("Заработать, советуя друзьям 💸", callback_data='earn_new_clients')
         )
         await bot.send_video(
             chat_id=message.chat.id,
@@ -736,7 +736,7 @@ async def earn_new_clients(message: types.Message, telegram_id: str, u_name: str
         InlineKeyboardButton("Привязать/изменить карту 💎", callback_data='bind_card'),
         InlineKeyboardButton("Получить реферальную ссылку 🚀", callback_data='get_referral'),
         InlineKeyboardButton("Сформировать отчёт о заработке 🏰", callback_data='generate_report'),
-        InlineKeyboardButton("Налоги 🏫", callback_data='tax_info'),
+        # InlineKeyboardButton("Налоги 🏫", callback_data='tax_info'),
         InlineKeyboardButton("Документы 📚", callback_data='documents'),
         InlineKeyboardButton("Назад", callback_data='start'),
     )
@@ -1518,7 +1518,7 @@ async def callback_fake_buy_course(call: types.CallbackQuery):
         # Если email не сохранён, просим ввести email
         user_payment_email_flow[telegram_id] = {"status": "waiting_email"}
         await call.message.answer(
-            "Напишите email, куда мы отправим одноразовую пригласительную ссылку на материалы курса. Будьте внимательны"
+            "Напишите email, куда мы отправим одноразовую пригласительную ссылку на материалы курса и чек об успешной оплате. Будьте внимательны"
         )
         # Сбрасываем инлайн-клаву
         await call.answer()
