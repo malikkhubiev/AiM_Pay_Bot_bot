@@ -21,6 +21,7 @@ from utils import *
 from loader import *
 import datetime
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ContentType
 import re
 
 # Кэш для хранения ссылок
@@ -107,6 +108,15 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
                 parse_mode=ParseMode.HTML,
                 reply_markup=keyboard
             )
+            # If user entered via referral, require phone number before they can become a successful referral
+            if referrer_id:
+                kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+                kb.add(KeyboardButton("Поделиться номером ☎️", request_contact=True))
+                await bot.send_message(
+                    chat_id=message.chat.id,
+                    text="Чтобы участвовать в реферальной программе, поделитесь номером телефона.",
+                    reply_markup=kb
+                )
         elif response["type"] == "user":
             log.info("type = user")
             log.info(f"response['to_show'] = {response['to_show']}")
@@ -153,6 +163,30 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
             )
     elif response["status"] == "error":
         await message.answer(response["message"])
+
+# Handle contact to save referral phone
+@dp.message_handler(content_types=ContentType.CONTACT)
+async def handle_contact(message: types.Message):
+    try:
+        contact = message.contact
+        telegram_id = str(message.from_user.id)
+        phone = contact.phone_number
+        payload = {"telegram_id": telegram_id, "phone": phone}
+        resp = await send_request(SERVER_URL + "/save_referral_phone", method="POST", json=payload)
+        if isinstance(resp, dict) and resp.get("status") == "success":
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text="Спасибо! Номер сохранён. Вы участвуете в реферальной программе.",
+                reply_markup=types.ReplyKeyboardRemove()
+            )
+        else:
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text=f"Ошибка сохранения номера: {resp.get('message','') if isinstance(resp, dict) else 'сервер не ответил'}",
+                reply_markup=types.ReplyKeyboardRemove()
+            )
+    except Exception as e:
+        await bot.send_message(chat_id=message.chat.id, text=f"Ошибка обработки номера: {e}")
 
 async def getting_started(message: types.Message, telegram_id: str, u_name: str = None):
     log.info(f"Получена команда /getting_started от {telegram_id}")
