@@ -93,22 +93,18 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
 
     if response["status"] == "success":
         if response["type"] == "temp_user":
-            log.info(f"temp")
-            log.info(LANDING_URL)
-            log.info(f"{str(LANDING_URL)}")
-            keyboard.add(
-                InlineKeyboardButton("Начало работы 🏔️", callback_data='getting_started'),
-                # InlineKeyboardButton("Документы 📚", callback_data='documents'),
-                InlineKeyboardButton("Сайт 📚", url=f"{str(LANDING_URL)}"),
-            )
-            log.info(f"send_message")
-            await bot.send_message(
-                chat_id=message.chat.id,
-                text='Добро пожаловать! \n📚 Перед покупкой курса «ML и Data Science для руководителей» рекомендуем ознакомиться с сайтом курса. \n🏔️ После нажатия кнопки «Начало работы», вы будете добавлены в нашу базу данных и сможете оплатить курс.',
-                parse_mode=ParseMode.HTML,
-                reply_markup=keyboard
-            )
-            # If user entered via referral, require phone number before they can become a successful referral
+            # Авторегистрация сразу после /start
+            log.info("temp_user → авто-регистрация через /getting_started")
+            try:
+                gs_resp = await send_request(
+                    SERVER_URL + "/getting_started",
+                    method="POST",
+                    json={"telegram_id": str(telegram_id)}
+                )
+                log.info(f"getting_started response {gs_resp}")
+            except Exception as e:
+                log.error(f"Ошибка авто-регистрации: {e}")
+            # Если пользователь пришёл по реферальной ссылке — просим номер
             if referrer_id:
                 kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
                 kb.add(KeyboardButton("Поделиться номером ☎️", request_contact=True))
@@ -117,7 +113,11 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
                     text="Чтобы участвовать в реферальной программе, поделитесь номером телефона.",
                     reply_markup=kb
                 )
-        elif response["type"] == "user":
+            # Переходим к основному меню как для зарегистрированного пользователя
+            response["type"] = "user"
+            response["response_message"] = f"Добро пожаловать, {username}!"
+
+        if response["type"] == "user":
             log.info("type = user")
             log.info(f"response['to_show'] = {response['to_show']}")
             if response["to_show"] == "pay_course":
@@ -150,11 +150,27 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
             # Без
             info_text = response["response_message"] + "\n\n💎Мы очень рады тебя видеть!💎\n\nЧто внутри курса:\n- 300+ видео-уроков С ГОТОВЫМ КОДОМ БЕЗ МАТЕМАТИКИ\n- Твоя первая модель и нейросеть С НУЛЯ, УЖЕ СЕГОДНЯ\n- СТИЛЬНЫЙ СЕРТИФИКАТ после сдачи теста\n\nЖдём тебя внутри, чтобы сэкономить твоё время и дать тебе практику как можно быстрее)"
             
+            # Проверяем оплаченный статус, чтобы показать кнопку сертификата только оплаченным
+            can_show_cert = False
+            try:
+                cu_resp = await send_request(
+                    SERVER_URL + "/check_user",
+                    method="POST",
+                    json={"telegram_id": str(telegram_id), "to_throw": False}
+                )
+                user_obj = cu_resp.get("user") if isinstance(cu_resp, dict) else None
+                paid_flag = (user_obj or {}).get("paid") if isinstance(user_obj, dict) else getattr(user_obj, 'paid', False)
+                can_show_cert = bool(paid_flag)
+            except Exception as e:
+                log.error(f"Ошибка проверки статуса оплаты: {e}")
+
+            # Основные кнопки
             keyboard.add(
-                InlineKeyboardButton("Получить сертфикат 🎓", callback_data='get_certificate'),
-                InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'),
                 InlineKeyboardButton("Заработать на новых клиентах 💸", callback_data='earn_new_clients')
             )
+            if can_show_cert:
+                keyboard.add(InlineKeyboardButton("Получить сертфикат 🎓", callback_data='get_certificate'))
+            keyboard.add(InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'))
             await bot.send_video(
                 chat_id=message.chat.id,
                 video=START_VIDEO_URL,
