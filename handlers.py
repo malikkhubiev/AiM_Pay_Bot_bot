@@ -92,20 +92,16 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
         if response["type"] == "user":
             log.info("type = user")
             log.info(f"response['to_show'] = {response['to_show']}")
+            can_show_cert = None
             if response["to_show"] == "pay_course":
+                can_show_cert = False
                 keyboard.add(
-                    # InlineKeyboardButton("Оплатить курс 💰", callback_data='pay_course'),
                     InlineKeyboardButton("Оплатить курс 💖", callback_data='fake_buy_course'),
                 )
-            
-            # С рефералом
-            # info_text = response["response_message"] + "\n\n💎Мы очень рады тебя видеть!💎\n\nОПЛАТИ КУРС, получи ЗНАНИЯ и ЗАРАБОТАЙ, советуя друзьям КАЧЕСТВЕННЫЙ ПРОДУКТ."
-            
-            # Без
-            info_text = response["response_message"] + "\n\n💎Мы очень рады тебя видеть!💎\n\nЧто внутри курса:\n- 300+ видео-уроков С ГОТОВЫМ КОДОМ БЕЗ МАТЕМАТИКИ\n- Твоя первая модель и нейросеть С НУЛЯ, УЖЕ СЕГОДНЯ\n- СТИЛЬНЫЙ СЕРТИФИКАТ после сдачи теста\n\nЖдём тебя внутри, чтобы сэкономить твоё время и дать тебе практику как можно быстрее)"
-            
+            elif response["to_show"] == "paid":
+                can_show_cert = True
+            info_text = response["response_message"] + "\n\n💎Мы очень рады тебя видеть!💎\n\nЧто внутри курса:\n- 300+ видео-уроков С ГОТОВЫМ КОДОМ БЕЗ МАТЕМАТИКИ\n- Твоя первая модель и нейросеть С НУЛЯ, УЖЕ СЕГОДНЯ\n- СТИЛЬНЫЙ СЕРТИФИКАТ после сдачи теста\n\nЖдём тебя внутри, чтобы сэкономить твоё время и дать тебе практику как можно быстрее)" 
             # Проверяем оплаченный статус, чтобы показать кнопку сертификата только оплаченным
-            can_show_cert = False
             try:
                 cu_resp = await send_request(
                     SERVER_URL + "/check_user",
@@ -1410,8 +1406,8 @@ async def handle_email_input(message: types.Message):
         return
     user_payment_email_flow[telegram_id] = {"status": "waiting_confirm", "email": email}
     keyboard = InlineKeyboardMarkup(row_width=1).add(
-        InlineKeyboardButton("Подтвердить", callback_data='confirm_pay_email'),
-        InlineKeyboardButton("Изменить", callback_data='change_pay_email'),
+        InlineKeyboardButton("Подтвердить ✅", callback_data='confirm_pay_email'),
+        InlineKeyboardButton("Изменить 🧠", callback_data='change_pay_email'),
     )
     await message.answer(
         f"Вы указали email: {email}\nПроверьте, правильно ли написан email.\nТеперь выберите действие:",
@@ -1454,8 +1450,8 @@ async def show_payment_prompt(message, telegram_id, email):
     )
     price = response.get("price", "-")
     keyboard = InlineKeyboardMarkup(row_width=1)
-    keyboard.add(InlineKeyboardButton("Заплатить", callback_data="actually_pay_for_course"))
-    keyboard.add(InlineKeyboardButton("Изменить почту", callback_data="change_pay_email"))
+    keyboard.add(InlineKeyboardButton("Оплатить 💖", callback_data="actually_pay_for_course"))
+    keyboard.add(InlineKeyboardButton("Изменить почту 💌", callback_data="change_pay_email"))
     keyboard.add(InlineKeyboardButton("Публичная оферта 🏦", callback_data='public_offer'))
     text = (
         f"💳 Стоимость курса по машинному обучению = {price} рублей\n\n"
