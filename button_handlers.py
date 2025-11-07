@@ -10,17 +10,13 @@ callback_handlers = {
     "getting_started": getting_started,
     "more_about_course": more_about_course,
     "course_structure": course_structure,
-    "type_promo": type_promo,
     "admin": admin,
     "get_payments_frequency": get_payments_frequency,
-    "get_promo_users_frequency": get_promo_users_frequency,
     "get_payout_balance": get_payout_balance,
     "documents": get_documents,
     "public_offer": get_public_offer,
     "privacy_policy": get_privacy_policy,
-    "pay_course": handle_pay_command,
     "earn_new_clients": earn_new_clients,
-    # "get_invite_link": send_invite_link,
     "get_referral": send_referral_link,
     "bind_card": bind_card,
     "generate_report": generate_clients_report,
@@ -36,6 +32,7 @@ callback_handlers = {
     "download_certificate": download_certificate,
     "get_trial": get_trial,
     "fake_buy_course": fake_buy_course,
+    # "get_invite_link": send_invite_link,
 }
 
 # Универсальная функция-обработчик
@@ -70,9 +67,6 @@ def register_callback_handlers(dp: Dispatcher):
     
     dp.callback_query_handler()(universal_callback_handler)
     # Передаем telegram_id в обработчики через обертку
-    # Промокодеры не актуальны
-    # dp.register_message_handler(lambda message: handle_promo_input(message, message.from_user.id),
-    #                             lambda message: message.text.startswith("AiM"))
 
     dp.register_message_handler(lambda message: save_fio(message, message.from_user.id),
                                 lambda message: message.text.startswith("ФИО: "))

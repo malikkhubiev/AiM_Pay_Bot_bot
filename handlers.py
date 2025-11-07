@@ -16,7 +16,6 @@ from config import (
 )
 import aiohttp
 import asyncio
-from analytics import send_event_to_ga4, send_event_to_google_form
 from utils import *
 from loader import *
 import datetime
@@ -47,20 +46,6 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
         telegram_id = message.from_user.id
     if not(username):
         username = message.from_user.username or message.from_user.first_name
-    
-    # --- Логирование входа пользователя в Google Форму ---
-    session_start = datetime.datetime.now().isoformat()
-    session_id = f"{telegram_id}_{session_start}"
-    await send_event_to_google_form({
-        "telegram_id": telegram_id,
-        "username": username,
-        "event_type": "start",
-        "button_name": None,
-        "session_id": session_id,
-        "session_start": session_start,
-        "session_end": None,
-        "session_duration": None,
-    })
 
     if telegram_id != str(MAIN_TELEGRAM_ID):
         await bot.send_message(
@@ -123,26 +108,8 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
             if response["to_show"] == "pay_course":
                 keyboard.add(
                     # InlineKeyboardButton("Оплатить курс 💰", callback_data='pay_course'),
-                    InlineKeyboardButton("Оплатить курс 💳", callback_data='fake_buy_course'),
+                    InlineKeyboardButton("Оплатить курс 💖", callback_data='fake_buy_course'),
                 )
-            
-            # if response["to_show"] == "trial":
-            #     keyboard.add(
-            #         InlineKeyboardButton("Пробный период 24 часа 🌌", callback_data='get_trial')
-            #     )
-
-            # Промокодеры упразднены
-            # if response["with_promo"] == True:
-            #     keyboard.add(
-            #         InlineKeyboardButton("Ввести промокод 🎩", callback_data='type_promo'),
-            #     )
-            
-
-            # Ссылка упразднена
-            # else:
-            #     keyboard.add(
-            #         InlineKeyboardButton("Получить ссылку", callback_data='get_invite_link'),
-            #     )
             
             # С рефералом
             # info_text = response["response_message"] + "\n\n💎Мы очень рады тебя видеть!💎\n\nОПЛАТИ КУРС, получи ЗНАНИЯ и ЗАРАБОТАЙ, советуя друзьям КАЧЕСТВЕННЫЙ ПРОДУКТ."
@@ -203,54 +170,6 @@ async def handle_contact(message: types.Message):
             )
     except Exception as e:
         await bot.send_message(chat_id=message.chat.id, text=f"Ошибка обработки номера: {e}")
-
-async def getting_started(message: types.Message, telegram_id: str, u_name: str = None):
-    log.info(f"Получена команда /getting_started от {telegram_id}")
-
-    if telegram_id != str(MAIN_TELEGRAM_ID):
-        await bot.send_message(
-            chat_id=str(MAIN_TELEGRAM_ID),
-            text=f"Пользователь telegram_id={telegram_id} username={u_name} нажал кнопку /getting started"
-        )
-
-    getting_started_url = SERVER_URL + "/getting_started"
-    user_data = {
-        "telegram_id": telegram_id
-    }
-    log.info(f"user_data {user_data}")
-
-    response = await send_request(
-        getting_started_url,
-        method="POST",
-        json=user_data
-    )
-    log.info(f"response {response}")
-
-    if response["status"] == "success":
-        keyboard = InlineKeyboardMarkup(row_width=1)
-
-        # Промокодеры упразднены
-        # if response["with_promo"] == True:
-        #     keyboard.add(
-        #         InlineKeyboardButton("Ввести промокод 🎩", callback_data='type_promo'),
-        #     )
-
-        keyboard.add(
-            # InlineKeyboardButton("Оплатить курс 💰", callback_data='pay_course'),
-            InlineKeyboardButton("Оплатить курс 💰", callback_data='fake_buy_course'),
-            # InlineKeyboardButton("Пробный период 24 часа 🌌", callback_data='get_trial'),
-            InlineKeyboardButton("Получить сертфикат 🎓", callback_data='get_certificate'),
-            InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'),
-            InlineKeyboardButton("Заработать, советуя друзьям 💸", callback_data='earn_new_clients')
-        )
-        await bot.send_video(
-            chat_id=message.chat.id,
-            video=START_VIDEO_URL,
-            caption="💎Мы очень рады тебя видеть!💎\n\nЧто внутри курса:\n- 300+ видео-уроков С ГОТОВЫМ КОДОМ БЕЗ МАТЕМАТИКИ\n- Твоя первая модель и нейросеть С НУЛЯ, УЖЕ СЕГОДНЯ\n- СТИЛЬНЫЙ СЕРТИФИКАТ после сдачи теста\n\nЖдём тебя внутри, чтобы сэкономить твоё время и дать тебе практику как можно быстрее)",
-            reply_markup=keyboard
-        )
-    elif response["status"] == "error":
-        await message.answer(response["message"])
 
 async def get_documents(message: types.Message, telegram_id: str, u_name: str = None):
     log.info(f"Получена команда /get_documents от {telegram_id}")
@@ -807,7 +726,6 @@ async def admin(message: types.Message, telegram_id: str, u_name: str = None):
     keyboard.add(
         InlineKeyboardButton("Мультипликаторы 🏛", callback_data='get_source_referral_stats'),
         InlineKeyboardButton("Информация о выплатах 💳", callback_data='get_payout_balance'),
-        InlineKeyboardButton("Промокодеры по датам 🐝", callback_data='get_promo_users_frequency'),
         InlineKeyboardButton("Оплаты по датам 🍰", callback_data='get_payments_frequency'),
         InlineKeyboardButton("Назад", callback_data='earn_new_clients'),
     )
@@ -882,57 +800,6 @@ async def get_payout_balance(message: types.Message, telegram_id: str, u_name: s
     elif response["status"] == "error":
         await message.answer(response["message"])
 
-async def get_promo_users_frequency(message: types.Message, telegram_id: str, u_name: str = None):
-    log.info(f"Получена команда /get_promo_users_frequency от {telegram_id}")
-
-    get_promo_users_frequency_url = SERVER_URL + "/get_promo_users_frequency"
-
-    if str(telegram_id) == str(MAIN_TELEGRAM_ID):
-        response = await send_request(
-            get_promo_users_frequency_url,
-            method="POST",
-            json={"message": "hey"}
-        )
-        log.info(f"response {response}")
-
-        if response["status"] == "success":
-            data = response["data"]
-            number_of_promo = data["number_of_promo"]
-            promo_num_left = data["promo_num_left"]
-            promo_users = data["promo_users_frequency"]
-            keyboard = InlineKeyboardMarkup(row_width=1)
-            keyboard.add(
-                InlineKeyboardButton("Назад", callback_data='admin'),
-            )
-            log.info(f"response data {response}")
-            await bot.send_message(
-                chat_id=message.chat.id,
-                text=f"Количество свободных промокодов: {promo_num_left}\nКоличество пользователей по промокоду: {number_of_promo}"
-            )
-            if promo_users:
-                log.info(f"users {promo_users}")
-                await bot.send_message(
-                    chat_id=message.chat.id,
-                    text="Список промокодеров по датам:"
-                )
-                for user in promo_users:
-                    log.info(f"promo_users перебор начался")
-                    
-                    user_info = f"{user['date']}\t{user['promo_users_count']}"
-                    log.info(f"user_info {user_info}")
-                    await bot.send_message(
-                        chat_id=message.chat.id,
-                        text=user_info,
-                        parse_mode=ParseMode.HTML
-                    )
-            await bot.send_message(
-                message.chat.id,
-                f"Что-нибудь ещё?",
-                reply_markup=keyboard
-            )
-    elif response["status"] == "error":
-        await message.answer(response["message"])
-
 async def get_payments_frequency(message: types.Message, telegram_id: str, u_name: str = None):
     log.info(f"Получена команда /get_payments_frequency от {telegram_id}")
 
@@ -961,7 +828,7 @@ async def get_payments_frequency(message: types.Message, telegram_id: str, u_nam
                     text="Список оплат по датам:"
                 )
                 for payment in payments_frequency:
-                    log.info(f"promo_users перебор начался")
+                    log.info(f"payments_frequency перебор начался")
                     
                     payments_info = f"{payment['date']}\t{payment['payments_count']}"
                     log.info(f"payments_info {payments_info}")
@@ -1069,33 +936,6 @@ async def get_source_referral_stats(message: types.Message, telegram_id: str, u_
                 await message.answer(response.get("message", "Произошла ошибка при получении отчёта."))
     else:
         await message.answer("У вас нет доступа к этой команде.")
-
-async def type_promo(message: types.Message, telegram_id: str, u_name: str = None):
-    await bot.send_message(
-        chat_id=message.chat.id,
-        text="Введите промокод без пробелов:"
-    )
-
-# Промокодеры упразднены
-# async def handle_promo_input(message: types.Message, telegram_id: str, u_name: str = None):
-#     promo_code = message.text.strip()
-#     log.info("Введённый промокод")
-#     if str(promo_code) == str(PROMO_CODE):
-#         log.info("Верный промокод")
-#         register_user_with_promo_url = SERVER_URL + "/register_user_with_promo"
-#         telegram_id = message.from_user.id
-#         user_data = {"telegram_id": telegram_id}
-#         response = await send_request(
-#             register_user_with_promo_url,
-#             method="POST",
-#             json=user_data
-#         )
-#         if response["status"] == "error":
-#             text = response["message"]
-#             await bot.send_message(
-#                 chat_id=message.chat.id,
-#                 text=text
-#             )
 
 async def generate_report(message: types.Message, telegram_id: str, u_name: str = None):
     keyboard = InlineKeyboardMarkup(row_width=1)
@@ -1380,7 +1220,6 @@ async def fake_buy_course(message: types.Message, telegram_id: str, u_name: str 
     )
     price = response["price"]
     email = response["email"]
-    card_number = response["card_number"]
 
     text = (
     f"💳 Стоимость курса по машинному обучению = {price} рублей\n\n"
