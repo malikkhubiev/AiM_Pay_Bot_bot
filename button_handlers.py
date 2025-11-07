@@ -11,7 +11,6 @@ callback_handlers = {
     "admin": admin,
     "get_payments_frequency": get_payments_frequency,
     "get_payout_balance": get_payout_balance,
-    "documents": get_documents,
     "public_offer": get_public_offer,
     "privacy_policy": get_privacy_policy,
     "earn_new_clients": earn_new_clients,
