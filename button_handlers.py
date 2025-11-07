@@ -1,13 +1,11 @@
 from handlers import *
 from test_handlers import *
 from utils import *
-from analytics import send_event_to_google_form
 import datetime
 
 # Список хэндлеров
 callback_handlers = {
     "start": start,
-    "getting_started": getting_started,
     "more_about_course": more_about_course,
     "course_structure": course_structure,
     "admin": admin,

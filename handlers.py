@@ -77,30 +77,17 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
     log.info(f"response {response}")
 
     if response["status"] == "success":
-        if response["type"] == "temp_user":
-            # Авторегистрация сразу после /start
-            log.info("temp_user → авто-регистрация через /getting_started")
-            try:
-                gs_resp = await send_request(
-                    SERVER_URL + "/getting_started",
-                    method="POST",
-                    json={"telegram_id": str(telegram_id)}
-                )
-                log.info(f"getting_started response {gs_resp}")
-            except Exception as e:
-                log.error(f"Ошибка авто-регистрации: {e}")
-            # Если пользователь пришёл по реферальной ссылке — просим номер
-            if referrer_id:
-                kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-                kb.add(KeyboardButton("Поделиться номером ☎️", request_contact=True))
-                await bot.send_message(
-                    chat_id=message.chat.id,
-                    text="Чтобы участвовать в реферальной программе, поделитесь номером телефона.",
-                    reply_markup=kb
-                )
-            # Переходим к основному меню как для зарегистрированного пользователя
-            response["type"] = "user"
-            response["response_message"] = f"Добро пожаловать, {username}!"
+        if referrer_id:
+            kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            kb.add(KeyboardButton("Поделиться номером ☎️", request_contact=True))
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text="Чтобы участвовать в реферальной программе, поделитесь номером телефона.",
+                reply_markup=kb
+            )
+        # Переходим к основному меню как для зарегистрированного пользователя
+        response["type"] = "user"
+        response["response_message"] = f"Добро пожаловать, {username}!"
 
         if response["type"] == "user":
             log.info("type = user")
@@ -705,8 +692,6 @@ async def earn_new_clients(message: types.Message, telegram_id: str, u_name: str
         InlineKeyboardButton("Привязать/изменить карту 💎", callback_data='bind_card'),
         InlineKeyboardButton("Получить реферальную ссылку 🚀", callback_data='get_referral'),
         InlineKeyboardButton("Сформировать отчёт о заработке 🏰", callback_data='generate_report'),
-        # InlineKeyboardButton("Налоги 🏫", callback_data='tax_info'),
-        InlineKeyboardButton("Документы 📚", callback_data='documents'),
         InlineKeyboardButton("Назад", callback_data='start'),
     )
 
@@ -1485,10 +1470,12 @@ async def show_payment_prompt(message, telegram_id, email):
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(InlineKeyboardButton("Заплатить", callback_data="actually_pay_for_course"))
     keyboard.add(InlineKeyboardButton("Изменить почту", callback_data="change_pay_email"))
+    keyboard.add(InlineKeyboardButton("Публичная оферта 🏦", callback_data='documents'))
     text = (
         f"💳 Стоимость курса по машинному обучению = {price} рублей\n\n"
         f"💌 Ваша электронная почта: {email}\n"
-        f"✅ При успешной оплате, на указанную почту вы получите пригласительную ссылку"
+        f"✅ При успешной оплате, на указанную почту вы получите пригласительную ссылку\n\n"
+        f"Нажимая кнопку «Заплатить», вы подтверждаете, что ознакомлены и согласны с условиями публичной оферты"
     )
     await message.answer(text, reply_markup=keyboard)
 

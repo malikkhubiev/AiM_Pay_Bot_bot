@@ -56,17 +56,6 @@ def web_server():
             )
             link = invite_link.invite_link
             log.info("Пригласительная ссылка создана: %s", link)
-
-            # save_invite_link_url = SERVER_URL + "/save_invite_link"
-            # user_data = {
-            #     "telegram_id": tg_id,
-            #     "invite_link": link
-            # }
-            # response = await send_request(
-            #     save_invite_link_url,
-            #     method="POST",
-            #     json=user_data
-            # )
             
             # if response["status"] == "success":
             keyboard = InlineKeyboardMarkup(row_width=1)
