@@ -158,20 +158,6 @@ async def handle_contact(message: types.Message):
     except Exception as e:
         await bot.send_message(chat_id=message.chat.id, text=f"Ошибка обработки номера: {e}")
 
-async def get_documents(message: types.Message, telegram_id: str, u_name: str = None):
-    log.info(f"Получена команда /get_documents от {telegram_id}")
-    keyboard = InlineKeyboardMarkup(row_width=1)
-    keyboard.add(
-        InlineKeyboardButton("Публичная оферта 📗", callback_data='public_offer'),
-        InlineKeyboardButton("Политика Конфиденциальности 📙", callback_data='privacy_policy'),
-        InlineKeyboardButton("Назад", callback_data='start'),
-    )
-    await bot.send_message(
-        chat_id=message.chat.id,
-        text="Внимательно прочитайте следующие документы.",
-        reply_markup=keyboard
-    )
-
 async def more_about_course(message: types.Message, telegram_id: str, u_name: str = None):
     log.info(f"Получена команда /more_about_course от {telegram_id}")
 
@@ -1470,7 +1456,7 @@ async def show_payment_prompt(message, telegram_id, email):
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(InlineKeyboardButton("Заплатить", callback_data="actually_pay_for_course"))
     keyboard.add(InlineKeyboardButton("Изменить почту", callback_data="change_pay_email"))
-    keyboard.add(InlineKeyboardButton("Публичная оферта 🏦", callback_data='documents'))
+    keyboard.add(InlineKeyboardButton("Публичная оферта 🏦", callback_data='public_offer'))
     text = (
         f"💳 Стоимость курса по машинному обучению = {price} рублей\n\n"
         f"💌 Ваша электронная почта: {email}\n"
