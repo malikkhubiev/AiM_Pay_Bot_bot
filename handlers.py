@@ -1437,9 +1437,18 @@ async def confirm_pay_email(call: types.CallbackQuery):
 @dp.callback_query_handler(lambda c: c.data == 'change_pay_email')
 async def change_pay_email(call: types.CallbackQuery):
     telegram_id = str(call.from_user.id)
-    user_payment_email_flow[telegram_id] = {"status": "waiting_email"}
-    await call.message.answer("Введите email ещё раз:")
-    await call.answer()
+
+    resp = await send_request(
+        SERVER_URL + "/is_paid",
+        method="POST",
+        json={"telegram_id": telegram_id}
+    )
+    if resp.get("paid") != True:
+        user_payment_email_flow[telegram_id] = {"status": "waiting_email"}
+        await call.message.answer("Введите email ещё раз:")
+        await call.answer()
+    else:
+        await message.answer("💌 Почта после оплаты не изменяется")
 
 async def show_payment_prompt(message, telegram_id, email):
     # Получить актуальные данные о цене, карте и прочем

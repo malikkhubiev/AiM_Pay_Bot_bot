@@ -36,19 +36,6 @@ callback_handlers = {
 async def universal_callback_handler(callback_query: types.CallbackQuery):
     user_id = str(callback_query.from_user.id)
     username = callback_query.from_user.username or callback_query.from_user.first_name
-    # --- Логирование нажатия кнопки ---
-    session_start = datetime.datetime.now().isoformat()  # Можно заменить на время старта сессии, если есть
-    session_id = f"{user_id}_{session_start}"
-    await send_event_to_google_form({
-        "telegram_id": user_id,
-        "username": username,
-        "event_type": "button_click",
-        "button_name": callback_query.data,
-        "session_id": session_id,
-        "session_start": session_start,
-        "session_end": None,
-        "session_duration": None,
-    })
     
     if user_id in BLACKLIST:
         raise CancelHandler()
