@@ -53,9 +53,13 @@ def register_callback_handlers(dp: Dispatcher):
     # Передаем telegram_id в обработчики через обертку
 
     # Обработчик номера карты уже зарегистрирован через декоратор @dp.message_handler в handlers.py
-
+    # Обработчик ФИО уже зарегистрирован через декоратор @dp.message_handler в handlers.py
+    
+    # Оставляем обработчик для формата "ФИО: ..." как резервный (с более низким приоритетом)
+    # Основной обработчик через состояние имеет более высокий приоритет
     dp.register_message_handler(lambda message: save_fio(message, message.from_user.id),
-                                lambda message: message.text.startswith("ФИО: "))
+                                lambda message: message.text.startswith("ФИО: ") and 
+                                not user_fio_flow.get(str(message.from_user.id), {}).get('waiting_fio'))
     
     dp.register_message_handler(lambda message: handle_fake_payment_command(message, message.from_user.id),
                                 lambda message: message.text.startswith("Добавить: "))

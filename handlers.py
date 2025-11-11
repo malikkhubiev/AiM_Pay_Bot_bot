@@ -31,6 +31,10 @@ links_cache = {}
 user_payment_email_flow = {}
 # Структура: {telegram_id: {"email": str, "status": "waiting_confirm"/"confirmed"}}
 
+# In-memory временное хранилище для ожидания ФИО
+user_fio_flow = {}
+# Структура: {telegram_id: {"waiting_fio": bool}}
+
 # Функция для инициализации словаря кэша, если его ещё нет
 def init_user_cache(telegram_id: str):
     if telegram_id not in links_cache:
@@ -47,6 +51,12 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
         telegram_id = message.from_user.id
     if not(username):
         username = message.from_user.username or message.from_user.first_name
+    
+    # Сбрасываем флаг ожидания ФИО при возврате в главное меню
+    telegram_id_str = str(telegram_id)
+    if telegram_id_str in user_fio_flow:
+        user_fio_flow[telegram_id_str]["waiting_fio"] = False
+        log.info(f"Сброшен флаг waiting_fio для пользователя {telegram_id_str} при возврате в главное меню")
 
     if telegram_id != str(MAIN_TELEGRAM_ID):
         await bot.send_message(
@@ -1027,7 +1037,7 @@ async def get_certificate(message: types.Message, telegram_id: str, u_name: str 
             )
         elif response["result"] == "need_fio":
             # Тест сдан, но ФИО не указано - запрашиваем ФИО
-            text = response.get("message", "Вы не установили своё ФИО для получения сертификата. Введите ФИО в формате: 'ФИО: Иванов Иван Иванович'. Будьте аккуратны в написании, исправить ФИО невозможно. Дата установки ФИО считается датой формирования сертификата.")
+            text = response.get("message", "Вы не установили своё ФИО для получения сертификата. Введите ФИО (например: Иванов Иван Иванович). Будьте аккуратны в написании, исправить ФИО невозможно. Дата установки ФИО считается датой формирования сертификата.")
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(InlineKeyboardButton("Назад", callback_data='start'))
             await bot.send_message(
@@ -1035,6 +1045,12 @@ async def get_certificate(message: types.Message, telegram_id: str, u_name: str 
                 text=text,
                 reply_markup=keyboard
             )
+            # Устанавливаем флаг ожидания ФИО
+            telegram_id_str = str(telegram_id)
+            if telegram_id_str not in user_fio_flow:
+                user_fio_flow[telegram_id_str] = {}
+            user_fio_flow[telegram_id_str]["waiting_fio"] = True
+            log.info(f"Установлен флаг waiting_fio для пользователя {telegram_id_str}")
         elif response["result"] == "passed":
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(
@@ -1066,6 +1082,7 @@ async def save_fio(message: types.Message, telegram_id: str, u_name: str = None)
     log.info("save_fio called")
 
     fio_input = message.text.strip()
+    # Поддерживаем оба формата: с префиксом "ФИО: " и без него
     fio_value = fio_input.replace("ФИО: ", "").strip()
     if not fio_value.strip():
         await bot.send_message(
@@ -1085,6 +1102,12 @@ async def save_fio(message: types.Message, telegram_id: str, u_name: str = None)
         json=user_data
     )
     if response["status"] == "success":
+        # Очищаем флаг ожидания ФИО
+        telegram_id_str = str(telegram_id)
+        if telegram_id_str in user_fio_flow:
+            user_fio_flow[telegram_id_str]["waiting_fio"] = False
+            log.info(f"Сброшен флаг waiting_fio для пользователя {telegram_id_str}")
+        
         keyboard = InlineKeyboardMarkup(row_width=1)
         keyboard.add(
             InlineKeyboardButton("Скачать сертификат", callback_data='download_certificate'),
@@ -1475,6 +1498,22 @@ async def handle_card_input(message: types.Message):
         f"✅ Номер карты успешно сохранён!\n\n💳 Карта: ****{card_number[-4:]}\n\nТеперь вы можете получать выплаты по реферальной программе.",
         reply_markup=keyboard
     )
+
+# Обработка текстовых сообщений (введённое ФИО):
+@dp.message_handler(lambda message: user_fio_flow.get(str(message.from_user.id), {}).get('waiting_fio') == True)
+async def handle_fio_input(message: types.Message):
+    telegram_id = str(message.from_user.id)
+    log.info(f"Обработка ввода ФИО для пользователя {telegram_id}")
+    
+    # Проверяем флаг ожидания ФИО
+    user_flow = user_fio_flow.get(telegram_id, {})
+    if not user_flow.get('waiting_fio'):
+        log.info(f"Флаг waiting_fio не установлен для {telegram_id}, пропускаем")
+        return
+    
+    # Вызываем функцию save_fio
+    await save_fio(message, telegram_id)
+    log.info(f"ФИО обработано для пользователя {telegram_id}")
 
 # Обработка текстовых сообщений (введённый email):
 @dp.message_handler(lambda message: user_payment_email_flow.get(str(message.from_user.id), {}).get('status') == 'waiting_email')
