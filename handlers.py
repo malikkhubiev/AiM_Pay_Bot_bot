@@ -1198,26 +1198,26 @@ async def fake_buy_course(message: types.Message, telegram_id: str, u_name: str 
         text=text
     )
 
-async def handle_photo(message: Message, telegram_id: str, u_name: str = None):
-    """
-    Получает фото от пользователя и пересылает его на заданный Telegram ID.
-    """
-    log.info(f"Получена фотография от пользователя: {telegram_id}")
+# async def handle_photo(message: Message, telegram_id: str, u_name: str = None):
+#     """
+#     Получает фото от пользователя и пересылает его на заданный Telegram ID.
+#     """
+#     log.info(f"Получена фотография от пользователя: {telegram_id}")
 
-    try:
-        # Получаем ID последней версии фото (наивысшее качество)
-        photo_id = message.photo[-1].file_id
-        # Пересылаем изображение определённому пользователю
-        await bot.send_photo(chat_id=MAIN_TELEGRAM_ID, photo=photo_id)
-        await bot.send_message(
-            chat_id=message.chat.id,
-            text=f"Добавить: {telegram_id}"
-        )
+#     try:
+#         # Получаем ID последней версии фото (наивысшее качество)
+#         photo_id = message.photo[-1].file_id
+#         # Пересылаем изображение определённому пользователю
+#         await bot.send_photo(chat_id=MAIN_TELEGRAM_ID, photo=photo_id)
+#         await bot.send_message(
+#             chat_id=message.chat.id,
+#             text=f"Добавить: {telegram_id}"
+#         )
 
-        log.info(f"Фото успешно отправлено админу с ID: {MAIN_TELEGRAM_ID}")
+#         log.info(f"Фото успешно отправлено админу с ID: {MAIN_TELEGRAM_ID}")
     
-    except Exception as e:
-        log.error(f"Ошибка при отправке фото админу: {e}")
+#     except Exception as e:
+#         log.error(f"Ошибка при отправке фото админу: {e}")
 
 
 async def handle_fake_payment_command(message: types.Message, telegram_id: str, u_name: str = None):
@@ -1417,6 +1417,7 @@ async def handle_email_input(message: types.Message):
 @dp.callback_query_handler(lambda c: c.data == 'confirm_pay_email')
 async def confirm_pay_email(call: types.CallbackQuery):
     telegram_id = str(call.from_user.id)
+    username = call.from_user.username or call.from_user.first_name
     email_data = user_payment_email_flow.get(telegram_id)
     if not email_data or 'email' not in email_data:
         await call.message.answer("Email не найден. Попробуйте ещё раз.")
@@ -1427,7 +1428,7 @@ async def confirm_pay_email(call: types.CallbackQuery):
     await send_request(
         SERVER_URL + "/set_pay_email",
         method="POST",
-        json={"telegram_id": telegram_id, "email": email, "action_type": "confirmed"}
+        json={"telegram_id": telegram_id, "username": username, "email": email, "action_type": "confirmed"}
     )
     user_payment_email_flow[telegram_id] = {"status": "confirmed", "email": email}
     await show_payment_prompt(call.message, telegram_id, email)
