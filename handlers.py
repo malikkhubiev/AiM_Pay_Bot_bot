@@ -54,66 +54,39 @@ def init_user_cache(telegram_id: str):
 async def handle_user_state(message: types.Message):
     """Обрабатывает текстовые сообщения на основе состояния пользователя. Имеет максимальный приоритет."""
     telegram_id = str(message.from_user.id)
-    message_text = message.text.strip() if message.text else ""
-    
-    # ПРОПУСКАЕМ КОМАНДЫ (начинающиеся с /)
-    if message_text.startswith('/'):
-        log.info(f"handle_user_state: пропускаем команду '{message_text}'")
-        return  # Пропускаем команды, чтобы их обработали другие обработчики
-    
-    # ПОДРОБНОЕ ЛОГИРОВАНИЕ
-    log.info(f"=== handle_user_state вызван ===")
-    log.info(f"Пользователь: {telegram_id}")
-    log.info(f"Текст сообщения: '{message_text}'")
-    log.info(f"Текущие состояния всех пользователей: {user_states}")
-    log.info(f"Состояние этого пользователя: {user_states.get(telegram_id)}")
-    log.info(f"user_payment_email_flow для этого пользователя: {user_payment_email_flow.get(telegram_id)}")
-    
     state = user_states.get(telegram_id)
     
-    # Если состояние не установлено, пропускаем дальше (не останавливаем обработку)
+    # Если состояние не установлено, пропускаем дальше
     if not state:
-        log.info(f"Состояние не установлено для {telegram_id}, пропускаем дальше к другим обработчикам")
-        return  # Пропускаем дальше, чтобы другие обработчики могли обработать сообщение
+        return
     
-    log.info(f"✅ ОБРАБОТКА СОСТОЯНИЯ '{state}' для пользователя {telegram_id}")
+    log.info(f"Обработка состояния '{state}' для пользователя {telegram_id}")
     
     # Обработка состояния ожидания ФИО
     if state == "waiting_fio":
-        log.info(f"🔵 Обработка ввода ФИО для пользователя {telegram_id}")
-        log.info(f"Полученный текст: '{message_text}'")
+        log.info(f"Обработка ввода ФИО для пользователя {telegram_id}")
+        fio_input = message.text.strip()
+        fio_value = fio_input.replace("ФИО: ", "").strip()
         
-        # Убираем префикс "ФИО: " если есть, но берём любой текст
-        fio_value = message_text.replace("ФИО: ", "").strip()
-        
-        log.info(f"ФИО после обработки: '{fio_value}'")
-        
-        # БЕЗ ВАЛИДАЦИИ - просто берём то, что прислали
-        if not fio_value:
-            log.warning(f"ФИО пустое, но всё равно отправляем на сервер")
-            fio_value = message_text  # Если после обработки пусто, берём исходный текст
-        
-        log.info(f"Отправляем на сервер ФИО: '{fio_value}'")
+        if not fio_value.strip():
+            await message.answer("ФИО не может быть пустым")
+            return  # Не сбрасываем состояние, чтобы пользователь мог попробовать снова
         
         save_fio_url = SERVER_URL + "/save_fio"
         user_data = {
             "telegram_id": telegram_id,
             "fio": fio_value,
         }
-        log.info(f"Данные для отправки: {user_data}")
-        
         response = await send_request(
             save_fio_url,
             method="POST",
             json=user_data
         )
         
-        log.info(f"Ответ сервера: {response}")
-        
-        if response.get("status") == "success":
+        if response["status"] == "success":
             # Сбрасываем состояние только при успехе
             user_states[telegram_id] = None
-            log.info(f"✅ Состояние 'waiting_fio' сброшено для пользователя {telegram_id}")
+            log.info(f"Состояние 'waiting_fio' сброшено для пользователя {telegram_id}")
             
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(
@@ -121,19 +94,16 @@ async def handle_user_state(message: types.Message):
                 InlineKeyboardButton("Сгенерировать ссылку", callback_data='generate_certificate_link'),
                 InlineKeyboardButton("Назад", callback_data='start')
             )
-            text = response.get("data", {}).get("message", "ФИО успешно сохранено")
+            text = response["data"]["message"]
             await message.answer(
                 text=text,
                 reply_markup=keyboard
             )
-            log.info(f"✅ ФИО успешно сохранено для пользователя {telegram_id}")
-        else:
-            text = response.get("message", "Ошибка при сохранении ФИО")
+        elif response["status"] == "error":
+            text = response["message"]
             await message.answer(text)
-            log.error(f"❌ Ошибка при сохранении ФИО: {text}")
             # Не сбрасываем состояние при ошибке, чтобы пользователь мог попробовать снова
         
-        log.info(f"=== Завершение обработки состояния waiting_fio ===")
         raise CancelHandler()  # Останавливаем дальнейшую обработку в любом случае
     
     # Обработка состояния ожидания email
@@ -1148,10 +1118,6 @@ async def get_certificate(message: types.Message, telegram_id: str, u_name: str 
             )
         elif response["result"] == "need_fio":
             # Тест сдан, но ФИО не указано - запрашиваем ФИО
-            log.info(f"=== get_certificate: need_fio ===")
-            log.info(f"Пользователь: {telegram_id}")
-            log.info(f"Текущие состояния ДО установки: {user_states}")
-            
             text = response.get("message", "Вы не установили своё ФИО для получения сертификата. Введите ФИО (например: Иванов Иван Иванович). Будьте аккуратны в написании, исправить ФИО невозможно. Дата установки ФИО считается датой формирования сертификата.")
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(InlineKeyboardButton("Назад", callback_data='start'))
@@ -1160,14 +1126,10 @@ async def get_certificate(message: types.Message, telegram_id: str, u_name: str 
                 text=text,
                 reply_markup=keyboard
             )
-            
             # Устанавливаем состояние ожидания ФИО
             telegram_id_str = str(telegram_id)
             user_states[telegram_id_str] = "waiting_fio"
-            log.info(f"✅ УСТАНОВЛЕНО состояние 'waiting_fio' для пользователя {telegram_id_str}")
-            log.info(f"Текущие состояния ПОСЛЕ установки: {user_states}")
-            log.info(f"Состояние пользователя {telegram_id_str}: {user_states.get(telegram_id_str)}")
-            log.info(f"=== get_certificate: need_fio завершено ===")
+            log.info(f"Установлено состояние 'waiting_fio' для пользователя {telegram_id_str}")
         elif response["result"] == "passed":
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(
@@ -1716,74 +1678,3 @@ async def actually_pay_for_course(call: types.CallbackQuery):
 
 def is_valid_email_local(email):
     return re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", email) is not None
-
-# ОБЩИЙ ОБРАБОТЧИК-ЛОВУШКА ДЛЯ ВСЕХ НЕОБРАБОТАННЫХ ТЕКСТОВЫХ СООБЩЕНИЙ
-# Регистрируется последним, чтобы поймать все сообщения, которые не обработались другими обработчиками
-@dp.message_handler(content_types=ContentType.TEXT)
-async def catch_all_messages(message: types.Message):
-    """Ловушка для всех необработанных текстовых сообщений. Логирует для отладки."""
-    telegram_id = str(message.from_user.id)
-    message_text = message.text.strip() if message.text else ""
-    
-    # ПРОПУСКАЕМ КОМАНДЫ (начинающиеся с /)
-    if message_text.startswith('/'):
-        return  # Пропускаем команды
-    
-    log.warning(f"⚠️⚠️⚠️ CATCH_ALL_MESSAGES вызван ⚠️⚠️⚠️")
-    log.warning(f"Это означает, что сообщение НЕ было обработано другими обработчиками!")
-    log.warning(f"Пользователь: {telegram_id}")
-    log.warning(f"Текст сообщения: '{message_text}'")
-    log.warning(f"Текущие состояния всех пользователей: {user_states}")
-    log.warning(f"Состояние этого пользователя: {user_states.get(telegram_id)}")
-    log.warning(f"user_payment_email_flow для этого пользователя: {user_payment_email_flow.get(telegram_id)}")
-    log.warning(f"⚠️⚠️⚠️ КОНЕЦ CATCH_ALL_MESSAGES ⚠️⚠️⚠️")
-    
-    # Если состояние установлено, но мы попали сюда - значит handle_user_state не обработал его
-    # Это критическая ошибка - обрабатываем вручную
-    state = user_states.get(telegram_id)
-    if state:
-        log.error(f"❌ КРИТИЧЕСКАЯ ОШИБКА: Состояние '{state}' установлено, но handle_user_state не обработал сообщение!")
-        log.error(f"Это означает, что handle_user_state либо не сработал, либо не обработал состояние правильно!")
-        log.error(f"Попытка обработать состояние '{state}' вручную из catch_all")
-        
-        # Попытка обработать вручную
-        if state == "waiting_fio":
-            try:
-                fio_value = message_text.replace("ФИО: ", "").strip() or message_text
-                log.info(f"Отправляем на сервер ФИО: '{fio_value}'")
-                
-                save_fio_url = SERVER_URL + "/save_fio"
-                user_data = {
-                    "telegram_id": telegram_id,
-                    "fio": fio_value,
-                }
-                log.info(f"Данные для отправки: {user_data}")
-                
-                response = await send_request(
-                    save_fio_url,
-                    method="POST",
-                    json=user_data
-                )
-                
-                log.info(f"Ответ сервера: {response}")
-                
-                if response.get("status") == "success":
-                    user_states[telegram_id] = None
-                    log.info(f"✅ Состояние 'waiting_fio' сброшено")
-                    keyboard = InlineKeyboardMarkup(row_width=1)
-                    keyboard.add(
-                        InlineKeyboardButton("Скачать сертификат", callback_data='download_certificate'),
-                        InlineKeyboardButton("Сгенерировать ссылку", callback_data='generate_certificate_link'),
-                        InlineKeyboardButton("Назад", callback_data='start')
-                    )
-                    text = response.get("data", {}).get("message", "ФИО успешно сохранено")
-                    await message.answer(text=text, reply_markup=keyboard)
-                    log.info(f"✅ ФИО успешно обработано вручную из catch_all")
-                else:
-                    error_text = response.get("message", "Ошибка при сохранении ФИО")
-                    await message.answer(error_text)
-                    log.error(f"❌ Ошибка при сохранении ФИО: {error_text}")
-            except Exception as e:
-                log.error(f"❌ Ошибка при ручной обработке ФИО: {e}", exc_info=True)
-    
-    log.warning(f"⚠️⚠️⚠️ КОНЕЦ CATCH_ALL_MESSAGES ⚠️⚠️⚠️")
