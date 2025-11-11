@@ -122,8 +122,6 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
                 InlineKeyboardButton("Заработать на новых клиентах 💸", callback_data='earn_new_clients')
             )
 
-            # Убрать
-            can_show_cert = True
             if can_show_cert:
                 keyboard.add(InlineKeyboardButton("Получить сертфикат 🎓", callback_data='get_certificate'))
             keyboard.add(InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'))
