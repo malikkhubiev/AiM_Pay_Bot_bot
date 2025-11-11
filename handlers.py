@@ -56,6 +56,11 @@ async def handle_user_state(message: types.Message):
     telegram_id = str(message.from_user.id)
     message_text = message.text.strip() if message.text else ""
     
+    # ПРОПУСКАЕМ КОМАНДЫ (начинающиеся с /)
+    if message_text.startswith('/'):
+        log.info(f"handle_user_state: пропускаем команду '{message_text}'")
+        return  # Пропускаем команды, чтобы их обработали другие обработчики
+    
     # ПОДРОБНОЕ ЛОГИРОВАНИЕ
     log.info(f"=== handle_user_state вызван ===")
     log.info(f"Пользователь: {telegram_id}")
@@ -1719,6 +1724,10 @@ async def catch_all_messages(message: types.Message):
     """Ловушка для всех необработанных текстовых сообщений. Логирует для отладки."""
     telegram_id = str(message.from_user.id)
     message_text = message.text.strip() if message.text else ""
+    
+    # ПРОПУСКАЕМ КОМАНДЫ (начинающиеся с /)
+    if message_text.startswith('/'):
+        return  # Пропускаем команды
     
     log.warning(f"⚠️⚠️⚠️ CATCH_ALL_MESSAGES вызван ⚠️⚠️⚠️")
     log.warning(f"Это означает, что сообщение НЕ было обработано другими обработчиками!")
