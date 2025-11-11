@@ -507,6 +507,7 @@ async def request_referral_chart(message: types.Message, telegram_id: str, u_nam
 
 async def bind_card(message: types.Message, telegram_id: str, u_name: str = None):
     # Упрощенный механизм: просто просим пользователя написать номер карты
+    telegram_id_str = str(telegram_id)  # Убеждаемся, что это строка
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(
         InlineKeyboardButton("Отмена", callback_data='earn_new_clients')
@@ -517,9 +518,10 @@ async def bind_card(message: types.Message, telegram_id: str, u_name: str = None
         reply_markup=keyboard
     )
     # Помечаем, что ожидаем номер карты от этого пользователя
-    if telegram_id not in user_payment_email_flow:
-        user_payment_email_flow[telegram_id] = {}
-    user_payment_email_flow[telegram_id]["waiting_card"] = True
+    if telegram_id_str not in user_payment_email_flow:
+        user_payment_email_flow[telegram_id_str] = {}
+    user_payment_email_flow[telegram_id_str]["waiting_card"] = True
+    log.info(f"Установлен флаг waiting_card для пользователя {telegram_id_str}")
 
 # Старый функционал с созданием ссылки - закомментирован
 # async def bind_card(message: types.Message, telegram_id: str, u_name: str = None):
@@ -1424,7 +1426,16 @@ async def callback_fake_buy_course(call: types.CallbackQuery):
 @dp.message_handler(lambda message: user_payment_email_flow.get(str(message.from_user.id), {}).get('waiting_card') == True)
 async def handle_card_input(message: types.Message):
     telegram_id = str(message.from_user.id)
+    log.info(f"Обработка ввода карты для пользователя {telegram_id}")
+    
+    # Проверяем флаг ожидания карты
+    user_flow = user_payment_email_flow.get(telegram_id, {})
+    if not user_flow.get('waiting_card'):
+        log.info(f"Флаг waiting_card не установлен для {telegram_id}, пропускаем")
+        return
+    
     card_number = message.text.strip().replace(' ', '').replace('-', '')
+    log.info(f"Получен номер карты: {card_number[:4]}****{card_number[-4:] if len(card_number) >= 4 else ''}")
     
     # Валидация номера карты (должно быть 16 цифр)
     if not card_number.isdigit() or len(card_number) != 16:

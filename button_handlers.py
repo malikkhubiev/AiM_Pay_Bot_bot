@@ -52,6 +52,8 @@ def register_callback_handlers(dp: Dispatcher):
     dp.callback_query_handler()(universal_callback_handler)
     # Передаем telegram_id в обработчики через обертку
 
+    # Обработчик номера карты уже зарегистрирован через декоратор @dp.message_handler в handlers.py
+
     dp.register_message_handler(lambda message: save_fio(message, message.from_user.id),
                                 lambda message: message.text.startswith("ФИО: "))
     
