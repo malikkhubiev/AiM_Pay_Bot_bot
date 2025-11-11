@@ -1,4 +1,5 @@
 from utils import log
+import math
 import os
 import io
 from config import (
@@ -505,33 +506,50 @@ async def request_referral_chart(message: types.Message, telegram_id: str, u_nam
         )
 
 async def bind_card(message: types.Message, telegram_id: str, u_name: str = None):
-    bind_card_url = SERVER_URL + "/bind_card"
-    user_data = {"telegram_id": telegram_id}
-    response = await send_request(
-        bind_card_url,
-        method="POST",
-        json=user_data
+    # Упрощенный механизм: просто просим пользователя написать номер карты
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(
+        InlineKeyboardButton("Отмена", callback_data='earn_new_clients')
     )
-    if response["status"] == "success":
-        binding_url = response["binding_url"]
-        log.info(f"binding_url {binding_url}")
-        keyboard = InlineKeyboardMarkup(row_width=1)
-        keyboard.add(
-            InlineKeyboardButton("Назад", callback_data='earn_new_clients')
-        )
-        text = ""
-        if binding_url:
-            text = f"Перейдите по следующей ссылке для привязки карты: {binding_url}"
-        else:
-            text = "Ошибка при генерации ссылки."
-        await bot.send_message(
-            chat_id=message.chat.id,
-            text=text,
-            reply_markup=keyboard
-        )
-    elif response["status"] == "error":
-        await message.answer(response["message"])
-        return
+    await bot.send_message(
+        chat_id=message.chat.id,
+        text="💳 Пожалуйста, напишите номер вашей банковской карты для получения выплат.\n\nФормат: 16 цифр без пробелов (например: 1234567890123456)",
+        reply_markup=keyboard
+    )
+    # Помечаем, что ожидаем номер карты от этого пользователя
+    if telegram_id not in user_payment_email_flow:
+        user_payment_email_flow[telegram_id] = {}
+    user_payment_email_flow[telegram_id]["waiting_card"] = True
+
+# Старый функционал с созданием ссылки - закомментирован
+# async def bind_card(message: types.Message, telegram_id: str, u_name: str = None):
+#     bind_card_url = SERVER_URL + "/bind_card"
+#     user_data = {"telegram_id": telegram_id}
+#     response = await send_request(
+#         bind_card_url,
+#         method="POST",
+#         json=user_data
+#     )
+#     if response["status"] == "success":
+#         binding_url = response["binding_url"]
+#         log.info(f"binding_url {binding_url}")
+#         keyboard = InlineKeyboardMarkup(row_width=1)
+#         keyboard.add(
+#             InlineKeyboardButton("Назад", callback_data='earn_new_clients')
+#         )
+#         text = ""
+#         if binding_url:
+#             text = f"Перейдите по следующей ссылке для привязки карты: {binding_url}"
+#         else:
+#             text = "Ошибка при генерации ссылки."
+#         await bot.send_message(
+#             chat_id=message.chat.id,
+#             text=text,
+#             reply_markup=keyboard
+#         )
+#     elif response["status"] == "error":
+#         await message.answer(response["message"])
+#         return
 
 async def send_referral_link(message: types.Message, telegram_id: str, u_name: str = None):
     log.info(f"send_referral_link")
@@ -669,22 +687,41 @@ async def earn_new_clients(message: types.Message, telegram_id: str, u_name: str
             InlineKeyboardButton("Админ 👑", callback_data='admin'),
         )
 
-    keyboard.add(
-        InlineKeyboardButton("Список лидеров 🤴", callback_data='get_top_referrers'),
-        InlineKeyboardButton("Привязать/изменить карту 💎", callback_data='bind_card'),
-        InlineKeyboardButton("Получить реферальную ссылку 🚀", callback_data='get_referral'),
-        InlineKeyboardButton("Сформировать отчёт о заработке 🏰", callback_data='generate_report'),
-        InlineKeyboardButton("Назад", callback_data='start'),
+    # Проверяем, привязана ли карта
+    check_card_url = SERVER_URL + "/check_card"
+    card_response = await send_request(
+        check_card_url,
+        method="POST",
+        json={"telegram_id": telegram_id}
     )
+    has_card = card_response.get("status") == "success" and card_response.get("has_card", False)
+
+    # По-умолчанию
+    keyboard.add(
+        InlineKeyboardButton("Привязать/изменить карту 💎", callback_data='bind_card'),
+    )
+    # Если привязана карта
+    if has_card:
+        keyboard.add(
+            InlineKeyboardButton("Получить реферальную ссылку 🚀", callback_data='get_referral'),
+            InlineKeyboardButton("Сформировать отчёт о заработке 🏰", callback_data='generate_report'),
+            InlineKeyboardButton("Список лидеров 🤴", callback_data='get_top_referrers'),
+        )
+    keyboard.add(
+        InlineKeyboardButton("Назад", callback_data='start')
+    )
+
+    price = int(COURSE_AMOUNT)
+    refka = int(REFERRAL_AMOUNT)
 
     await bot.send_video(
         chat_id=message.chat.id,
         video=EARN_NEW_CLIENTS_VIDEO_URL,
-        caption=f"💸Курс стоит {COURSE_AMOUNT} рублей.💸\n- За каждого друга, который купил курс, ты заработаешь {REFERRAL_AMOUNT} рублей.\n- Приведи 3-х таких друзей и отбей стоимость курса.\n- Начиная с 4-го друга, ты начнёшь зарабатывать."
+        caption=f"💸Курс стоит {COURSE_AMOUNT} рублей.💸\n- За каждого друга, который купил курс, ты заработаешь {REFERRAL_AMOUNT} рублей.\n- Приведи {math.ceil(price/refka)}-х таких друзей и отбей стоимость курса."
     )
     await bot.send_message(
         message.chat.id,
-        f"Твои друзья обычно сидят:\n- в чатах по изучению программирования 👩‍💻\n- в тг-группах российских ВУЗов 🏤.\n\nТы выйдешь на ПРИБЫЛЬ в {float(REFERRAL_AMOUNT)*50} рублей после приглашения 50 друзей.🌍\n\nДружить - это полезно 🍯 \n\nПеред тем как начать, ещё раз внимательно прочитай документы на всякий случай. 📚",
+        f"Твои друзья обычно сидят:\n- в чатах по изучению программирования 👩‍💻\n- в тг-группах российских ВУЗов 🏤.\n\nТы выйдешь на ПРИБЫЛЬ в {float(REFERRAL_AMOUNT)*50} рублей после приглашения 50 друзей.🌍\n\nДружить - это полезно 🍯",
         reply_markup=keyboard
     )
 
@@ -1382,6 +1419,40 @@ async def callback_fake_buy_course(call: types.CallbackQuery):
     # Если email уже есть, показываем данные + кнопки Оплатить/Изменить почту
     await show_payment_prompt(call.message, telegram_id, pay_email)
     await call.answer()
+
+# Обработка текстовых сообщений (введённый номер карты):
+@dp.message_handler(lambda message: user_payment_email_flow.get(str(message.from_user.id), {}).get('waiting_card') == True)
+async def handle_card_input(message: types.Message):
+    telegram_id = str(message.from_user.id)
+    card_number = message.text.strip().replace(' ', '').replace('-', '')
+    
+    # Валидация номера карты (должно быть 16 цифр)
+    if not card_number.isdigit() or len(card_number) != 16:
+        await message.answer("❌ Номер карты должен содержать 16 цифр. Пожалуйста, введите номер карты ещё раз (например: 1234567890123456)")
+        return
+    
+    # Отправляем на сервер для сохранения
+    server_resp = await send_request(
+        SERVER_URL + "/set_card_number",
+        method="POST",
+        json={"telegram_id": telegram_id, "card_number": card_number}
+    )
+    
+    if server_resp.get("status") != "success":
+        await message.answer(f"❌ Ошибка: {server_resp.get('message', 'Не удалось сохранить номер карты')}")
+        return
+    
+    # Очищаем флаг ожидания
+    if telegram_id in user_payment_email_flow:
+        user_payment_email_flow[telegram_id]["waiting_card"] = False
+    
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(InlineKeyboardButton("Назад", callback_data='earn_new_clients'))
+    
+    await message.answer(
+        f"✅ Номер карты успешно сохранён!\n\n💳 Карта: ****{card_number[-4:]}\n\nТеперь вы можете получать выплаты по реферальной программе.",
+        reply_markup=keyboard
+    )
 
 # Обработка текстовых сообщений (введённый email):
 @dp.message_handler(lambda message: user_payment_email_flow.get(str(message.from_user.id), {}).get('status') == 'waiting_email')
