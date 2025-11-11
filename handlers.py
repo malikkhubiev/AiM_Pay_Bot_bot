@@ -27,13 +27,18 @@ import re
 # Кэш для хранения ссылок
 links_cache = {}
 
+# ЕДИНАЯ СИСТЕМА СОСТОЯНИЙ ПОЛЬЗОВАТЕЛЕЙ
+# Структура: {telegram_id: "waiting_fio" | "waiting_email" | "waiting_card" | None}
+user_states = {}
+# Состояния:
+# - "waiting_fio" - ожидается ввод ФИО
+# - "waiting_email" - ожидается ввод email
+# - "waiting_card" - ожидается ввод номера карты
+# - None или отсутствие ключа - нет активного состояния
+
 # In-memory временное хранилище email-flow для каждого пользователя (telegram_id)
 user_payment_email_flow = {}
 # Структура: {telegram_id: {"email": str, "status": "waiting_confirm"/"confirmed"}}
-
-# In-memory временное хранилище для ожидания ФИО
-user_fio_flow = {}
-# Структура: {telegram_id: {"waiting_fio": bool}}
 
 # Функция для инициализации словаря кэша, если его ещё нет
 def init_user_cache(telegram_id: str):
@@ -42,6 +47,84 @@ def init_user_cache(telegram_id: str):
             'invite_link': None,
             'referral_link': None
         }
+
+# ОБРАБОТЧИК СОСТОЯНИЙ С МАКСИМАЛЬНЫМ ПРИОРИТЕТОМ
+# Должен быть зарегистрирован ПЕРВЫМ, до всех остальных обработчиков
+@dp.message_handler(content_types=ContentType.TEXT)
+async def handle_user_state(message: types.Message):
+    """Обрабатывает текстовые сообщения на основе состояния пользователя. Имеет максимальный приоритет."""
+    telegram_id = str(message.from_user.id)
+    state = user_states.get(telegram_id)
+    
+    # Если состояние не установлено, пропускаем дальше
+    if not state:
+        return
+    
+    log.info(f"Обработка состояния '{state}' для пользователя {telegram_id}")
+    
+    # Обработка состояния ожидания ФИО
+    if state == "waiting_fio":
+        log.info(f"Обработка ввода ФИО для пользователя {telegram_id}")
+        fio_input = message.text.strip()
+        fio_value = fio_input.replace("ФИО: ", "").strip()
+        
+        if not fio_value.strip():
+            await message.answer("ФИО не может быть пустым")
+            return  # Не сбрасываем состояние, чтобы пользователь мог попробовать снова
+        
+        save_fio_url = SERVER_URL + "/save_fio"
+        user_data = {
+            "telegram_id": telegram_id,
+            "fio": fio_value,
+        }
+        response = await send_request(
+            save_fio_url,
+            method="POST",
+            json=user_data
+        )
+        
+        if response["status"] == "success":
+            # Сбрасываем состояние только при успехе
+            user_states[telegram_id] = None
+            log.info(f"Состояние 'waiting_fio' сброшено для пользователя {telegram_id}")
+            
+            keyboard = InlineKeyboardMarkup(row_width=1)
+            keyboard.add(
+                InlineKeyboardButton("Скачать сертификат", callback_data='download_certificate'),
+                InlineKeyboardButton("Сгенерировать ссылку", callback_data='generate_certificate_link'),
+                InlineKeyboardButton("Назад", callback_data='start')
+            )
+            text = response["data"]["message"]
+            await message.answer(
+                text=text,
+                reply_markup=keyboard
+            )
+        elif response["status"] == "error":
+            text = response["message"]
+            await message.answer(text)
+            # Не сбрасываем состояние при ошибке, чтобы пользователь мог попробовать снова
+        
+        raise CancelHandler()  # Останавливаем дальнейшую обработку в любом случае
+    
+    # Обработка состояния ожидания email
+    elif state == "waiting_email":
+        log.info(f"Обработка ввода email для пользователя {telegram_id}")
+        await handle_email_input(message)
+        # Состояние сбрасывается внутри handle_email_input после успешной обработки
+        raise CancelHandler()  # Останавливаем дальнейшую обработку
+    
+    # Обработка состояния ожидания номера карты
+    elif state == "waiting_card":
+        log.info(f"Обработка ввода карты для пользователя {telegram_id}")
+        # handle_card_input обрабатывает валидацию и отправку на сервер
+        # Если валидация не прошла или произошла ошибка, функция делает return раньше
+        # и состояние не сбрасывается, чтобы пользователь мог попробовать снова
+        await handle_card_input(message)
+        # Если мы дошли сюда без исключений, значит обработка прошла успешно
+        # (handle_card_input делает return при ошибках, поэтому если мы здесь - значит успех)
+        user_states[telegram_id] = None
+        log.info(f"Состояние 'waiting_card' сброшено для пользователя {telegram_id}")
+        raise CancelHandler()  # Останавливаем дальнейшую обработку
 
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message, telegram_id: str = None, username: str = None):
@@ -52,11 +135,11 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
     if not(username):
         username = message.from_user.username or message.from_user.first_name
     
-    # Сбрасываем флаг ожидания ФИО при возврате в главное меню
+    # Сбрасываем все состояния при возврате в главное меню
     telegram_id_str = str(telegram_id)
-    if telegram_id_str in user_fio_flow:
-        user_fio_flow[telegram_id_str]["waiting_fio"] = False
-        log.info(f"Сброшен флаг waiting_fio для пользователя {telegram_id_str} при возврате в главное меню")
+    if telegram_id_str in user_states:
+        user_states[telegram_id_str] = None
+        log.info(f"Все состояния сброшены для пользователя {telegram_id_str} при возврате в главное меню")
 
     if telegram_id != str(MAIN_TELEGRAM_ID):
         await bot.send_message(
@@ -522,11 +605,9 @@ async def bind_card(message: types.Message, telegram_id: str, u_name: str = None
         text="💳 Пожалуйста, напишите номер вашей банковской карты для получения выплат.\n\nФормат: 16 цифр без пробелов (например: 1234567890123456)",
         reply_markup=keyboard
     )
-    # Помечаем, что ожидаем номер карты от этого пользователя
-    if telegram_id_str not in user_payment_email_flow:
-        user_payment_email_flow[telegram_id_str] = {}
-    user_payment_email_flow[telegram_id_str]["waiting_card"] = True
-    log.info(f"Установлен флаг waiting_card для пользователя {telegram_id_str}")
+    # Устанавливаем состояние ожидания номера карты
+    user_states[telegram_id_str] = "waiting_card"
+    log.info(f"Установлено состояние 'waiting_card' для пользователя {telegram_id_str}")
 
 # Старый функционал с созданием ссылки - закомментирован
 # async def bind_card(message: types.Message, telegram_id: str, u_name: str = None):
@@ -1045,12 +1126,10 @@ async def get_certificate(message: types.Message, telegram_id: str, u_name: str 
                 text=text,
                 reply_markup=keyboard
             )
-            # Устанавливаем флаг ожидания ФИО
+            # Устанавливаем состояние ожидания ФИО
             telegram_id_str = str(telegram_id)
-            if telegram_id_str not in user_fio_flow:
-                user_fio_flow[telegram_id_str] = {}
-            user_fio_flow[telegram_id_str]["waiting_fio"] = True
-            log.info(f"Установлен флаг waiting_fio для пользователя {telegram_id_str}")
+            user_states[telegram_id_str] = "waiting_fio"
+            log.info(f"Установлено состояние 'waiting_fio' для пользователя {telegram_id_str}")
         elif response["result"] == "passed":
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(
@@ -1102,12 +1181,7 @@ async def save_fio(message: types.Message, telegram_id: str, u_name: str = None)
         json=user_data
     )
     if response["status"] == "success":
-        # Очищаем флаг ожидания ФИО
-        telegram_id_str = str(telegram_id)
-        if telegram_id_str in user_fio_flow:
-            user_fio_flow[telegram_id_str]["waiting_fio"] = False
-            log.info(f"Сброшен флаг waiting_fio для пользователя {telegram_id_str}")
-        
+        # Состояние уже сброшено в handle_user_state
         keyboard = InlineKeyboardMarkup(row_width=1)
         keyboard.add(
             InlineKeyboardButton("Скачать сертификат", callback_data='download_certificate'),
@@ -1445,7 +1519,8 @@ async def callback_fake_buy_course(call: types.CallbackQuery):
     pay_email = response.get('email')
     if not pay_email:
         # Если email не сохранён, просим ввести email
-        user_payment_email_flow[telegram_id] = {"status": "waiting_email"}
+        user_states[telegram_id] = "waiting_email"
+        log.info(f"Установлено состояние 'waiting_email' для пользователя {telegram_id}")
         await call.message.answer(
             "Напишите email, куда мы отправим одноразовую пригласительную ссылку на материалы курса и чек об успешной оплате. Будьте внимательны"
         )
@@ -1456,17 +1531,10 @@ async def callback_fake_buy_course(call: types.CallbackQuery):
     await show_payment_prompt(call.message, telegram_id, pay_email)
     await call.answer()
 
-# Обработка текстовых сообщений (введённый номер карты):
-@dp.message_handler(lambda message: user_payment_email_flow.get(str(message.from_user.id), {}).get('waiting_card') == True)
+# Функция обработки ввода номера карты (вызывается из handle_user_state)
 async def handle_card_input(message: types.Message):
     telegram_id = str(message.from_user.id)
     log.info(f"Обработка ввода карты для пользователя {telegram_id}")
-    
-    # Проверяем флаг ожидания карты
-    user_flow = user_payment_email_flow.get(telegram_id, {})
-    if not user_flow.get('waiting_card'):
-        log.info(f"Флаг waiting_card не установлен для {telegram_id}, пропускаем")
-        return
     
     card_number = message.text.strip().replace(' ', '').replace('-', '')
     log.info(f"Получен номер карты: {card_number[:4]}****{card_number[-4:] if len(card_number) >= 4 else ''}")
@@ -1474,7 +1542,7 @@ async def handle_card_input(message: types.Message):
     # Валидация номера карты (должно быть 16 цифр)
     if not card_number.isdigit() or len(card_number) != 16:
         await message.answer("❌ Номер карты должен содержать 16 цифр. Пожалуйста, введите номер карты ещё раз (например: 1234567890123456)")
-        return
+        return  # Не сбрасываем состояние, чтобы пользователь мог попробовать снова
     
     # Отправляем на сервер для сохранения
     server_resp = await send_request(
@@ -1485,12 +1553,9 @@ async def handle_card_input(message: types.Message):
     
     if server_resp.get("status") != "success":
         await message.answer(f"❌ Ошибка: {server_resp.get('message', 'Не удалось сохранить номер карты')}")
-        return
+        return  # Не сбрасываем состояние при ошибке
     
-    # Очищаем флаг ожидания
-    if telegram_id in user_payment_email_flow:
-        user_payment_email_flow[telegram_id]["waiting_card"] = False
-    
+    # Состояние будет сброшено в handle_user_state после успешной обработки
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(InlineKeyboardButton("Назад", callback_data='earn_new_clients'))
     
@@ -1499,34 +1564,17 @@ async def handle_card_input(message: types.Message):
         reply_markup=keyboard
     )
 
-# Обработка текстовых сообщений (введённое ФИО):
-@dp.message_handler(lambda message: user_fio_flow.get(str(message.from_user.id), {}).get('waiting_fio') == True)
-async def handle_fio_input(message: types.Message):
-    telegram_id = str(message.from_user.id)
-    log.info(f"Обработка ввода ФИО для пользователя {telegram_id}")
-    
-    # Проверяем флаг ожидания ФИО
-    user_flow = user_fio_flow.get(telegram_id, {})
-    if not user_flow.get('waiting_fio'):
-        log.info(f"Флаг waiting_fio не установлен для {telegram_id}, пропускаем")
-        return
-    
-    # Вызываем функцию save_fio
-    await save_fio(message, telegram_id)
-    log.info(f"ФИО обработано для пользователя {telegram_id}")
-
-# Обработка текстовых сообщений (введённый email):
-@dp.message_handler(lambda message: user_payment_email_flow.get(str(message.from_user.id), {}).get('status') == 'waiting_email')
+# Функция обработки ввода email (вызывается из handle_user_state)
 async def handle_email_input(message: types.Message):
     telegram_id = str(message.from_user.id)
     email = message.text.strip()
     if not is_valid_email_local(email):
         await message.answer("Пожалуйста, введите корректный email (пример: name@domain.com)")
-        return
+        return  # Не сбрасываем состояние, чтобы пользователь мог попробовать снова
     existing = user_payment_email_flow.get(telegram_id, {}).get("email")
     if existing == email:
         await message.answer("Этот email уже был введён. Введите другой или нажмите 'Изменить'.")
-        return
+        return  # Не сбрасываем состояние
     # Валидация сервером
     server_resp = await send_request(
         SERVER_URL + "/set_pay_email",
@@ -1535,8 +1583,14 @@ async def handle_email_input(message: types.Message):
     )
     if server_resp.get("status") != "success":
         await message.answer(f"Ошибка: {server_resp.get('message', 'Не удалось сохранить email')}")
-        return
+        return  # Не сбрасываем состояние при ошибке
+    
+    # Сохраняем email во временное хранилище для подтверждения
     user_payment_email_flow[telegram_id] = {"status": "waiting_confirm", "email": email}
+    
+    # Сбрасываем состояние ожидания email, так как теперь ждем подтверждения
+    user_states[telegram_id] = None
+    
     keyboard = InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton("Подтвердить ✅", callback_data='confirm_pay_email'),
         InlineKeyboardButton("Изменить 🧠", callback_data='change_pay_email'),
@@ -1576,11 +1630,13 @@ async def change_pay_email(call: types.CallbackQuery):
         json={"telegram_id": telegram_id}
     )
     if resp.get("paid") != True:
-        user_payment_email_flow[telegram_id] = {"status": "waiting_email"}
+        user_states[telegram_id] = "waiting_email"
+        log.info(f"Установлено состояние 'waiting_email' для пользователя {telegram_id}")
         await call.message.answer("Введите email ещё раз:")
         await call.answer()
     else:
-        await message.answer("💌 Почта после оплаты не изменяется")
+        await call.message.answer("💌 Почта после оплаты не изменяется")
+        await call.answer()
 
 async def show_payment_prompt(message, telegram_id, email):
     # Получить актуальные данные о цене, карте и прочем
