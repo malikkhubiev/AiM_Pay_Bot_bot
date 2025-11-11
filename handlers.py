@@ -78,14 +78,6 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
     log.info(f"response {response}")
 
     if response["status"] == "success":
-        if referrer_id:
-            kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            kb.add(KeyboardButton("Поделиться номером ☎️", request_contact=True))
-            await bot.send_message(
-                chat_id=message.chat.id,
-                text="Чтобы участвовать в реферальной программе, поделитесь номером телефона.",
-                reply_markup=kb
-            )
         # Переходим к основному меню как для зарегистрированного пользователя
         response["type"] = "user"
         response["response_message"] = f"Добро пожаловать, {username}!"
@@ -1009,9 +1001,7 @@ async def get_certificate(message: types.Message, telegram_id: str, u_name: str 
         method="POST",
         json=user_data
     )
-    # Убрать
-    response["status"] = "success"
-    response["result"] = "test"
+    
     if response["status"] == "success":
         if response["result"] == "test":
             keyboard = InlineKeyboardMarkup(row_width=1)
@@ -1029,6 +1019,22 @@ async def get_certificate(message: types.Message, telegram_id: str, u_name: str 
     - Нажмите на кнопку, если уверены в своей подготовке.
 Желаем успехов!
             """
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text=info_text,
+                parse_mode=ParseMode.HTML,
+                reply_markup=keyboard
+            )
+        elif response["result"] == "need_fio":
+            # Тест сдан, но ФИО не указано - запрашиваем ФИО
+            text = response.get("message", "Вы не установили своё ФИО для получения сертификата. Введите ФИО в формате: 'ФИО: Иванов Иван Иванович'. Будьте аккуратны в написании, исправить ФИО невозможно. Дата установки ФИО считается датой формирования сертификата.")
+            keyboard = InlineKeyboardMarkup(row_width=1)
+            keyboard.add(InlineKeyboardButton("Назад", callback_data='start'))
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text=text,
+                reply_markup=keyboard
+            )
         elif response["result"] == "passed":
             keyboard = InlineKeyboardMarkup(row_width=1)
             keyboard.add(
@@ -1042,13 +1048,12 @@ async def get_certificate(message: types.Message, telegram_id: str, u_name: str 
 Вы можете скачать сертификат в формате PDF или перейти на страницу просмотра сертификата.
 Поздравляем 🎉)
             """
-        
-        await bot.send_message(
-            chat_id=message.chat.id,
-            text=info_text,
-            parse_mode=ParseMode.HTML,
-            reply_markup=keyboard
-        )
+            await bot.send_message(
+                chat_id=message.chat.id,
+                text=info_text,
+                parse_mode=ParseMode.HTML,
+                reply_markup=keyboard
+            )
     elif response["status"] == "error":
         text = response["message"]
         await bot.send_message(

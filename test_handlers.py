@@ -26,7 +26,37 @@ def get_question_keyboard(question_id):
 async def start_test(message: types.Message, telegram_id: str, u_name: str = None):
     now = datetime.now()
 
-    # Проверяем, не прошло ли 7 дней с последнего теста
+    # Проверяем статус пользователя через API
+    try:
+        from utils import send_request
+        from config import SERVER_URL
+        url = SERVER_URL + "/can_get_certificate"
+        user_data = {"telegram_id": telegram_id}
+        response = await send_request(url, method="POST", json=user_data)
+        
+        # Если тест сдан, но ФИО не указано - запрашиваем ФИО
+        if response.get("status") == "success" and response.get("result") == "need_fio":
+            text = response.get("message", "Вы не установили своё ФИО для получения сертификата. Введите ФИО в формате: 'ФИО: Иванов Иван Иванович'. Будьте аккуратны в написании, исправить ФИО невозможно. Дата установки ФИО считается датой формирования сертификата.")
+            await message.answer(text)
+            return
+        
+        # Если тест уже сдан и ФИО указано - показываем сообщение о возможности получить сертификат
+        if response.get("status") == "success" and response.get("result") == "passed":
+            keyboard = InlineKeyboardMarkup(row_width=1)
+            keyboard.add(
+                InlineKeyboardButton("Скачать сертификат", callback_data='download_certificate'),
+                InlineKeyboardButton("Сгенерировать ссылку", callback_data='generate_certificate_link'),
+                InlineKeyboardButton("Назад", callback_data='start')
+            )
+            await message.answer(
+                "Ваш тест на получение сертификата был успешно пройден!\nВы можете скачать сертификат в формате PDF или перейти на страницу просмотра сертификата.\nПоздравляем 🎉)",
+                reply_markup=keyboard
+            )
+            return
+    except Exception as e:
+        log.error(f"Ошибка при проверке статуса сертификата: {e}")
+
+    # Проверяем, не прошло ли 3 дня с последнего теста
     if telegram_id in user_test_info and now < user_test_info[telegram_id]["next_attempt"]:
         retry_time = user_test_info[telegram_id]["next_attempt"].strftime('%Y-%m-%d %H:%M:%S')
         await message.answer(f"Вы уже проходили тест. Повторно пройти можно {retry_time} UTC (Лондон) или позже.")
