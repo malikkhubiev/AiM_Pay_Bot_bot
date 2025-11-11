@@ -119,6 +119,9 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
             keyboard.add(
                 InlineKeyboardButton("Заработать на новых клиентах 💸", callback_data='earn_new_clients')
             )
+
+            # Убрать
+            can_show_cert = True
             if can_show_cert:
                 keyboard.add(InlineKeyboardButton("Получить сертфикат 🎓", callback_data='get_certificate'))
             keyboard.add(InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'))
@@ -1006,6 +1009,9 @@ async def get_certificate(message: types.Message, telegram_id: str, u_name: str 
         method="POST",
         json=user_data
     )
+    # Убрать
+    response["status"] = "success"
+    response["result"] = "test"
     if response["status"] == "success":
         if response["result"] == "test":
             keyboard = InlineKeyboardMarkup(row_width=1)
