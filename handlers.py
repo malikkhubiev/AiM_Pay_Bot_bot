@@ -125,6 +125,7 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
             if can_show_cert:
                 keyboard.add(InlineKeyboardButton("Получить сертфикат 🎓", callback_data='get_certificate'))
             keyboard.add(InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'))
+            keyboard.add(InlineKeyboardButton("Сайт", url='https://ai-bot-landing.vercel.app/'))
             await bot.send_video(
                 chat_id=message.chat.id,
                 video=START_VIDEO_URL,
@@ -1591,8 +1592,7 @@ async def show_payment_prompt(message, telegram_id, email):
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(InlineKeyboardButton("Оплатить 💖", callback_data="actually_pay_for_course"))
     keyboard.add(InlineKeyboardButton("Изменить почту 💌", callback_data="change_pay_email"))
-    keyboard.add(InlineKeyboardButton("Публичная оферта 🏦", callback_data='public_offer'))
-    text1 = (
+    keyboard.add(InlineKeyboardButton("Публичная оферта 🏦", url="https://docs.google.com/document/d/1N6ZZoRyW1uIBNVATMaFC_lxQDIpUi1vwNpS8YWvGr-U/edit?usp=sharing"))    text1 = (
         f"💳 Стоимость курса по машинному обучению = {price} рублей\n"
         f"💌 Ваша электронная почта: {email}"
     )
