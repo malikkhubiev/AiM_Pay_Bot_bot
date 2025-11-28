@@ -1592,7 +1592,8 @@ async def show_payment_prompt(message, telegram_id, email):
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(InlineKeyboardButton("Оплатить 💖", callback_data="actually_pay_for_course"))
     keyboard.add(InlineKeyboardButton("Изменить почту 💌", callback_data="change_pay_email"))
-    keyboard.add(InlineKeyboardButton("Публичная оферта 🏦", url="https://docs.google.com/document/d/1N6ZZoRyW1uIBNVATMaFC_lxQDIpUi1vwNpS8YWvGr-U/edit?usp=sharing"))    text1 = (
+    keyboard.add(InlineKeyboardButton("Публичная оферта 🏦", url="https://docs.google.com/document/d/1N6ZZoRyW1uIBNVATMaFC_lxQDIpUi1vwNpS8YWvGr-U/edit?usp=sharing"))
+    text1 = (
         f"💳 Стоимость курса по машинному обучению = {price} рублей\n"
         f"💌 Ваша электронная почта: {email}"
     )
