@@ -125,7 +125,8 @@ async def start(message: types.Message, telegram_id: str = None, username: str =
             if can_show_cert:
                 keyboard.add(InlineKeyboardButton("Получить сертфикат 🎓", callback_data='get_certificate'))
             keyboard.add(InlineKeyboardButton("Подробнее о курсе 🔬", callback_data='more_about_course'))
-            keyboard.add(InlineKeyboardButton("Сайт", url='https://ai-bot-landing.vercel.app/'))
+            keyboard.add(InlineKeyboardButton("Чек-лист Wall Street 🐺", url='https://github.com/malikkhubiev/check_list'))
+            keyboard.add(InlineKeyboardButton("Главный сайт", url='https://ai-bot-landing.vercel.app/'))
             await bot.send_video(
                 chat_id=message.chat.id,
                 video=START_VIDEO_URL,
